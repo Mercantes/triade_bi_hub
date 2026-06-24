@@ -1,32 +1,63 @@
 import type { Funil } from "@/lib/types";
 import { brl, brlOrDash, num, pct } from "@/lib/format";
 import { attainmentBar, attainmentText } from "@/lib/colors";
+import { buildChartSeries } from "@/lib/pace";
 import { Card, SectionTitle, StatCard, ProgressBar } from "./ui";
+import { HeroMetric } from "./hero-metric";
+import { PaceSub } from "./pace-sub";
 import { FunnelBars } from "./funnel-bars";
-import { MotivosDonut } from "./motivos-donut";
+import { MotivosBars } from "./motivos-bars";
+import { ReunioesTable } from "./reunioes-table";
 
 function ciclo(dias: number): string {
   if (!dias) return "—";
   return `${dias.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} dias`;
 }
 
-export function VendasPanel({ funil }: { funil: Funil }) {
+export function VendasPanel({ funil, fromISO }: { funil: Funil; fromISO: string }) {
   const { ganhos_perdas: gp, conversao_ciclo: cc, metricas: m } = funil;
+  const metas = m.metas;
 
   return (
     <div className="space-y-6">
+      {/* Hero: reuniões realizadas com curva + pace */}
+      <HeroMetric
+        label="Reuniões realizadas"
+        metaNoun="reuniões realizadas"
+        value={m.reunioes_realizadas}
+        meta={metas.reunioes_realizadas}
+        serie={buildChartSeries(
+          m.serie_diaria,
+          "reunioes_realizadas",
+          metas.reunioes_realizadas,
+          fromISO,
+        )}
+        fromISO={fromISO}
+      />
+
       {/* KPIs */}
-      <section className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-7">
+      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <StatCard
           label="Faturamento"
           value={brl(gp.ganhos.valor)}
           valueClassName="text-[#22c55e]"
+          hint={
+            <PaceSub
+              value={gp.ganhos.valor}
+              meta={metas.faturamento}
+              fromISO={fromISO}
+              format="currency"
+            />
+          }
         />
-        <StatCard label="Vendas (qtd)" value={num(gp.ganhos.qtd)} />
+        <StatCard
+          label="Vendas (qtd)"
+          value={num(gp.ganhos.qtd)}
+          hint={<PaceSub value={gp.ganhos.qtd} meta={metas.vendas} fromISO={fromISO} />}
+        />
         <StatCard label="Ticket Médio" value={brlOrDash(cc.ticket_medio)} />
         <StatCard label="Taxa de Fechamento" value={pct(cc.win_rate)} />
         <StatCard label="Ciclo Médio" value={ciclo(cc.ciclo_medio_dias)} />
-        <StatCard label="Reuniões Realizadas" value={num(m.reunioes_realizadas)} />
         <StatCard
           label="Valor em Aberto"
           value={brl(funil.pipeline_por_etapa.total_aberto)}
@@ -62,11 +93,11 @@ export function VendasPanel({ funil }: { funil: Funil }) {
               </p>
             </Card>
           </div>
-          <MotivosDonut motivos={gp.motivos_perda} />
+          <MotivosBars motivos={gp.motivos_perda} />
         </div>
       </section>
 
-      {/* Ranking meta R$ + Reuniões realizadas */}
+      {/* Ranking meta R$ + Reuniões realizadas por vendedor */}
       <section className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Card className="p-5">
           <SectionTitle>Ranking de vendedores (meta R$)</SectionTitle>
@@ -80,30 +111,34 @@ export function VendasPanel({ funil }: { funil: Funil }) {
               </tr>
             </thead>
             <tbody className="divide-y divide-[#26262c]">
-              {funil.ranking_metas.vendedores.map((v) => {
-                const at = v.atingimento_valor_pct;
-                return (
-                  <tr key={v.owner_id} className="text-[#d4d4d8]">
-                    <td className="py-2">{v.vendedor}</td>
-                    <td className="py-2 text-right tabular-nums">{num(v.qtd)}</td>
-                    <td className="py-2 text-right font-semibold tabular-nums text-[#f4f4f5]">
-                      {brl(v.valor)}
-                    </td>
-                    <td className="py-2 pl-4">
-                      {at == null ? (
-                        <span className="text-xs text-[#8a8a93]">sem meta</span>
-                      ) : (
-                        <div className="flex items-center gap-2">
-                          <ProgressBar pct={at} barClass={attainmentBar(at)} />
-                          <span className={`shrink-0 text-xs tabular-nums ${attainmentText(at)}`}>
-                            {pct(at)}
-                          </span>
-                        </div>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
+              {[...funil.ranking_metas.vendedores]
+                .sort((a, b) => b.valor - a.valor)
+                .map((v) => {
+                  const at = v.atingimento_faturamento_pct;
+                  return (
+                    <tr key={v.owner_id} className="text-[#d4d4d8]">
+                      <td className="py-2">{v.vendedor}</td>
+                      <td className="py-2 text-right tabular-nums">{num(v.qtd)}</td>
+                      <td className="py-2 text-right font-semibold tabular-nums text-[#f4f4f5]">
+                        {brl(v.valor)}
+                      </td>
+                      <td className="py-2 pl-4">
+                        {at == null ? (
+                          <span className="text-xs text-[#8a8a93]">sem meta</span>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <ProgressBar pct={at} barClass={attainmentBar(at)} />
+                            <span
+                              className={`shrink-0 text-xs tabular-nums ${attainmentText(at)}`}
+                            >
+                              {pct(at)}
+                            </span>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
               {funil.ranking_metas.vendedores.length === 0 && (
                 <tr>
                   <td colSpan={4} className="py-6 text-center text-[#8a8a93]">
@@ -146,6 +181,9 @@ export function VendasPanel({ funil }: { funil: Funil }) {
           </table>
         </Card>
       </section>
+
+      {/* Reuniões do mês */}
+      <ReunioesTable reunioes={m.reunioes_detalhe} vendedorLabel="Closer" />
     </div>
   );
 }

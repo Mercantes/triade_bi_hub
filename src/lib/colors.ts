@@ -1,10 +1,27 @@
 /** Helpers de cor por threshold (retornam classes Tailwind de texto). */
 
+export const POS = "#22c55e";
+export const WARN = "#eab308";
+export const NEG = "#e50914";
+
 /** Taxa de comparecimento: verde ≥70, amarelo 40–69, vermelho <40. */
 export function attendanceColor(v: number): string {
   if (v >= 70) return "text-[#22c55e]";
   if (v >= 40) return "text-[#eab308]";
   return "text-[#e50914]";
+}
+
+/** Ritmo/pace: verde ≥100, amarelo 80–99, vermelho <80. */
+export function ritmoColor(pct: number): string {
+  if (pct >= 100) return "text-[#22c55e]";
+  if (pct >= 80) return "text-[#eab308]";
+  return "text-[#e50914]";
+}
+
+export function ritmoHex(pct: number): string {
+  if (pct >= 100) return POS;
+  if (pct >= 80) return WARN;
+  return NEG;
 }
 
 /** Atingimento de meta: verde ≥100, amarelo 70–99, vermelho <70. */

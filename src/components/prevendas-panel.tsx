@@ -1,165 +1,151 @@
-import type { Funil, VendedorContagem } from "@/lib/types";
+import type { Funil } from "@/lib/types";
 import { num, pct } from "@/lib/format";
-import { attendanceColor, attainmentBar, attainmentText } from "@/lib/colors";
-import { Card, SectionTitle, StatCard, ProgressBar } from "./ui";
+import { attendanceColor } from "@/lib/colors";
+import { computePace, buildChartSeries } from "@/lib/pace";
+import { HeroMetric } from "./hero-metric";
+import { RankingCard, type RankRow } from "./ranking-card";
+import { PaceSub } from "./pace-sub";
 import { FunnelBars } from "./funnel-bars";
-import { MotivosDonut } from "./motivos-donut";
+import { MotivosBars } from "./motivos-bars";
+import { ReunioesTable } from "./reunioes-table";
 
-/** Junta reuniões marcadas + realizadas por vendedor. */
-function mergeSdrMeetings(
-  marcadas: VendedorContagem[],
-  realizadas: VendedorContagem[],
-) {
-  const map = new Map<string, { vendedor: string; marcadas: number; realizadas: number }>();
-  for (const m of marcadas) {
-    map.set(m.vendedor, { vendedor: m.vendedor, marcadas: m.qtd, realizadas: 0 });
-  }
-  for (const r of realizadas) {
-    const entry = map.get(r.vendedor) ?? {
-      vendedor: r.vendedor,
-      marcadas: 0,
-      realizadas: 0,
-    };
-    entry.realizadas = r.qtd;
-    map.set(r.vendedor, entry);
-  }
-  return [...map.values()].sort((a, b) => b.marcadas - a.marcadas);
+function toRows(arr: { vendedor: string; qtd: number }[]): RankRow[] {
+  return arr.map((v) => ({ vendedor: v.vendedor, value: v.qtd }));
 }
 
-export function PreVendasPanel({ funil }: { funil: Funil }) {
+export function PreVendasPanel({ funil, fromISO }: { funil: Funil; fromISO: string }) {
   const m = funil.metricas;
-  const sdrs = mergeSdrMeetings(
-    m.reunioes_marcadas_por_vendedor,
-    m.reunioes_realizadas_por_vendedor,
-  );
+  const metas = m.metas;
+  const dias = computePace(0, fromISO, 0);
 
   return (
     <div className="space-y-6">
-      {/* KPIs */}
-      <section className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-7">
-        <StatCard label="Leads Abertos" value={num(m.leads_abertos)} />
-        <StatCard label="Leads para Abrir" value={num(m.leads_para_abrir)} />
-        <StatCard label="Reuniões Marcadas" value={num(m.reunioes_marcadas)} />
-        <StatCard label="Reuniões Realizadas" value={num(m.reunioes_realizadas)} />
-        <StatCard label="No-Show" value={num(m.no_show)} />
-        <StatCard
-          label="Comparecimento"
-          value={pct(m.taxa_comparecimento)}
-          valueClassName={attendanceColor(m.taxa_comparecimento)}
+      {/* Cabeçalho da seção */}
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-bold tracking-tight">SDRs</h2>
+        <span className="text-sm text-[#8a8a93]">
+          Dia útil{" "}
+          <span className="font-semibold text-[#f4f4f5]">
+            {dias.diasUteisDecorridos}
+          </span>{" "}
+          de {dias.diasUteisTotais}
+        </span>
+      </div>
+
+      {/* Cards hero com gráfico + pace */}
+      <div className="space-y-4">
+        <HeroMetric
+          label="Leads abertos"
+          metaNoun="leads abertos"
+          value={m.leads_abertos}
+          meta={metas.leads_abertos}
+          serie={buildChartSeries(m.serie_diaria, "leads_abertos", metas.leads_abertos, fromISO)}
+          fromISO={fromISO}
         />
-        <StatCard
-          label="Ativ. Atrasadas"
-          value={num(m.atividades_atrasadas)}
-          valueClassName={
-            m.atividades_atrasadas > 0 ? "text-[#e50914]" : "text-[#f4f4f5]"
+        <HeroMetric
+          label="Reuniões marcadas"
+          metaNoun="reuniões marcadas"
+          value={m.reunioes_marcadas}
+          meta={metas.reunioes_marcadas}
+          serie={buildChartSeries(m.serie_diaria, "reunioes_marcadas", metas.reunioes_marcadas, fromISO)}
+          fromISO={fromISO}
+        />
+        <HeroMetric
+          label="Reuniões realizadas"
+          metaNoun="reuniões realizadas"
+          value={m.reunioes_realizadas}
+          meta={metas.reunioes_realizadas}
+          serie={buildChartSeries(m.serie_diaria, "reunioes_realizadas", metas.reunioes_realizadas, fromISO)}
+          fromISO={fromISO}
+        />
+      </div>
+
+      {/* Grid de cards por vendedor */}
+      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <RankingCard
+          title="Leads Abertos"
+          icon="users"
+          accent="#3b82f6"
+          total={num(m.leads_abertos)}
+          sub={<PaceSub value={m.leads_abertos} meta={metas.leads_abertos} fromISO={fromISO} />}
+          columnLabel="abertos"
+          rows={toRows(m.leads_abertos_por_vendedor)}
+          formatValue={num}
+          averageLabel="média leads abertos/vendedor"
+        />
+        <RankingCard
+          title="Reuniões Marcadas"
+          icon="calendar"
+          accent="#a855f7"
+          total={num(m.reunioes_marcadas)}
+          sub={<PaceSub value={m.reunioes_marcadas} meta={metas.reunioes_marcadas} fromISO={fromISO} />}
+          columnLabel="marcadas"
+          rows={toRows(m.reunioes_marcadas_por_vendedor)}
+          formatValue={num}
+          averageLabel="média marcadas/vendedor"
+        />
+        <RankingCard
+          title="Reuniões Realizadas"
+          icon="check-circle"
+          accent="#22c55e"
+          total={num(m.reunioes_realizadas)}
+          sub={<PaceSub value={m.reunioes_realizadas} meta={metas.reunioes_realizadas} fromISO={fromISO} />}
+          columnLabel="realizadas"
+          rows={toRows(m.reunioes_realizadas_por_vendedor)}
+          formatValue={num}
+          averageLabel="média realizadas/vendedor"
+        />
+        <RankingCard
+          title="Taxa de Comparecimento"
+          icon="user-check"
+          accent="#2dd4bf"
+          total={
+            <span className={attendanceColor(m.taxa_comparecimento)}>
+              {pct(m.taxa_comparecimento)}
+            </span>
           }
+          columnLabel="realizadas"
+          rows={m.comparecimento_por_vendedor.map((v) => ({
+            vendedor: v.vendedor,
+            value: v.pct,
+          }))}
+          formatValue={(v) => pct(v)}
+          averageLabel="média comparecimento/vendedor"
+        />
+        <RankingCard
+          title="Leads para Abrir"
+          icon="inbox"
+          accent="#06b6d4"
+          total={num(m.leads_para_abrir)}
+          columnLabel="na fila"
+          rows={toRows(m.leads_para_abrir_por_vendedor)}
+          formatValue={num}
+          averageLabel="média na fila/vendedor"
+        />
+        <RankingCard
+          title="Atividades Atrasadas"
+          icon="clock"
+          accent="#ef4444"
+          total={
+            <span className={m.atividades_atrasadas > 0 ? "text-[#e50914]" : undefined}>
+              {num(m.atividades_atrasadas)}
+            </span>
+          }
+          columnLabel="atrasadas"
+          rows={toRows(m.atividades_atrasadas_por_vendedor)}
+          formatValue={num}
+          averageLabel="média atrasadas/vendedor"
         />
       </section>
 
-      {/* Funil + Ranking SDR */}
+      {/* Funil + Motivos de perda */}
       <section className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <FunnelBars etapas={funil.pipeline_por_etapa.etapas} showValue={false} />
-
-        <Card className="p-5">
-          <SectionTitle>Ranking de SDRs por reuniões</SectionTitle>
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left text-xs uppercase tracking-wider text-[#8a8a93]">
-                <th className="pb-2 font-medium">Vendedor</th>
-                <th className="pb-2 text-right font-medium">Marcadas</th>
-                <th className="pb-2 text-right font-medium">Realizadas</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#26262c]">
-              {sdrs.map((s) => (
-                <tr key={s.vendedor} className="text-[#d4d4d8]">
-                  <td className="py-2">{s.vendedor}</td>
-                  <td className="py-2 text-right font-semibold tabular-nums text-[#f4f4f5]">
-                    {num(s.marcadas)}
-                  </td>
-                  <td className="py-2 text-right tabular-nums">{num(s.realizadas)}</td>
-                </tr>
-              ))}
-              {sdrs.length === 0 && (
-                <tr>
-                  <td colSpan={3} className="py-6 text-center text-[#8a8a93]">
-                    Sem dados.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </Card>
+        <MotivosBars motivos={funil.ganhos_perdas.motivos_perda} />
       </section>
 
-      {/* Meta (qtd) + Atividades atrasadas */}
-      <section className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <Card className="p-5">
-          <SectionTitle>Ranking com meta (quantidade)</SectionTitle>
-          <div className="space-y-3">
-            {funil.ranking_metas.vendedores.map((v) => {
-              const at = v.atingimento_qtd_pct;
-              return (
-                <div key={v.owner_id}>
-                  <div className="mb-1 flex items-baseline justify-between text-sm">
-                    <span className="text-[#d4d4d8]">{v.vendedor}</span>
-                    <span className="tabular-nums text-[#8a8a93]">
-                      <span className="font-semibold text-[#f4f4f5]">{num(v.qtd)}</span>
-                      {at == null ? (
-                        <span className="ml-2 text-xs">sem meta</span>
-                      ) : (
-                        <span className={`ml-2 text-xs ${attainmentText(at)}`}>
-                          {pct(at)}
-                        </span>
-                      )}
-                    </span>
-                  </div>
-                  {at != null && (
-                    <ProgressBar pct={at} barClass={attainmentBar(at)} />
-                  )}
-                </div>
-              );
-            })}
-            {funil.ranking_metas.vendedores.length === 0 && (
-              <p className="py-6 text-center text-sm text-[#8a8a93]">Sem dados.</p>
-            )}
-          </div>
-        </Card>
-
-        <Card className="p-5">
-          <SectionTitle>Atividades atrasadas por SDR</SectionTitle>
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left text-xs uppercase tracking-wider text-[#8a8a93]">
-                <th className="pb-2 font-medium">Vendedor</th>
-                <th className="pb-2 text-right font-medium">Qtd</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#26262c]">
-              {m.atividades_atrasadas_por_vendedor.map((a) => (
-                <tr key={a.owner_id} className="text-[#d4d4d8]">
-                  <td className="py-2">{a.vendedor}</td>
-                  <td className="py-2 text-right font-semibold tabular-nums text-[#e50914]">
-                    {num(a.qtd)}
-                  </td>
-                </tr>
-              ))}
-              {m.atividades_atrasadas_por_vendedor.length === 0 && (
-                <tr>
-                  <td colSpan={2} className="py-6 text-center text-[#22c55e]">
-                    Nenhuma atividade atrasada 🎉
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </Card>
-      </section>
-
-      {/* Motivos de perda */}
-      <section>
-        <MotivosDonut motivos={funil.ganhos_perdas.motivos_perda} />
-      </section>
+      {/* Reuniões do mês */}
+      <ReunioesTable reunioes={m.reunioes_detalhe} vendedorLabel="Vendedor" />
     </div>
   );
 }

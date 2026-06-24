@@ -32,6 +32,14 @@ export const SHORTCUTS: { label: string; range: () => Range }[] = [
   { label: "Últimos 12 meses", range: () => lastMonthsRange(12) },
 ];
 
+/** Nome do mês (capitalizado) a partir de uma data ISO. Ex.: "Junho". */
+export function monthLabel(iso: string): string {
+  const [y, m] = iso.split("-").map(Number);
+  const d = new Date(y, (m ?? 1) - 1, 1);
+  const nome = d.toLocaleDateString("pt-BR", { month: "long" });
+  return nome.charAt(0).toUpperCase() + nome.slice(1);
+}
+
 /** dd/mm/aaaa para exibição. */
 export function displayDate(iso: string): string {
   const [y, m, d] = iso.split("-");

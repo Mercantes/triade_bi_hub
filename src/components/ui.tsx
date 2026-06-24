@@ -37,14 +37,16 @@ export function StatCard({
   hint?: ReactNode;
 }) {
   return (
-    <Card className="p-4">
+    <Card className="flex min-h-[116px] flex-col p-5">
       <p className="text-[11px] font-medium uppercase tracking-wider text-[#8a8a93]">
         {label}
       </p>
-      <p className={`mt-1.5 text-2xl font-bold tabular-nums ${valueClassName}`}>
+      <p
+        className={`mt-1.5 whitespace-nowrap text-2xl font-bold tabular-nums ${valueClassName}`}
+      >
         {value}
       </p>
-      {hint && <p className="mt-1 text-xs text-[#8a8a93]">{hint}</p>}
+      {hint && <p className="mt-auto pt-1 text-xs text-[#8a8a93]">{hint}</p>}
     </Card>
   );
 }

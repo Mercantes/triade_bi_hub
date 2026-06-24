@@ -47,3 +47,16 @@ export function dateTimeBR(iso: string): string {
     minute: "2-digit",
   });
 }
+
+/** Data/hora ISO -> compacto pt-BR (ex.: 24/06 11:07). "—" se vazio. */
+export function dateTimeShort(iso: string | null | undefined): string {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
+  return d.toLocaleString("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}

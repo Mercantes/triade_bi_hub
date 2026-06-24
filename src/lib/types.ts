@@ -38,9 +38,20 @@ export interface VendedorMeta {
   qtd: number;
   valor: number;
   vendedor: string;
+  ticket: number;
+  meta_vendas: number;
+  meta_faturamento: number;
+  meta_ticket: number;
+  meta_leads: number;
+  meta_reun_marcadas: number;
+  meta_reun_realizadas: number;
+  meta_taxa_fechamento: number;
+  atingimento_vendas_pct: number | null;
+  atingimento_faturamento_pct: number | null;
+  // Campos legados (compatibilidade)
   meta_valor: number;
-  meta_qtd: number;
   atingimento_valor_pct: number | null;
+  meta_qtd: number;
   atingimento_qtd_pct: number | null;
 }
 
@@ -48,6 +59,37 @@ export interface VendedorContagem {
   owner_id: number;
   vendedor: string;
   qtd: number;
+}
+
+export interface VendedorPct {
+  owner_id: number;
+  vendedor: string;
+  pct: number;
+}
+
+export interface PontoSerie {
+  dia: string; // YYYY-MM-DD
+  leads_abertos: number;
+  reunioes_marcadas: number;
+  reunioes_realizadas: number;
+}
+
+export type StatusReuniao = "Agendada" | "Realizada" | "No-Show" | string;
+
+export interface ReuniaoDetalhe {
+  cliente: string;
+  vendedor: string;
+  marcada_em: string;
+  realizada_em: string;
+  status: StatusReuniao;
+}
+
+export interface Metas {
+  leads_abertos: number;
+  reunioes_marcadas: number;
+  reunioes_realizadas: number;
+  vendas: number;
+  faturamento: number;
 }
 
 export interface Metricas {
@@ -58,9 +100,15 @@ export interface Metricas {
   no_show: number;
   taxa_comparecimento: number;
   atividades_atrasadas: number;
+  metas: Metas;
   atividades_atrasadas_por_vendedor: VendedorContagem[];
   reunioes_marcadas_por_vendedor: VendedorContagem[];
   reunioes_realizadas_por_vendedor: VendedorContagem[];
+  leads_abertos_por_vendedor: VendedorContagem[];
+  leads_para_abrir_por_vendedor: VendedorContagem[];
+  comparecimento_por_vendedor: VendedorPct[];
+  serie_diaria: PontoSerie[];
+  reunioes_detalhe: ReuniaoDetalhe[];
 }
 
 export interface Funil {
@@ -81,3 +129,17 @@ export interface BiResponse {
 }
 
 export type FunilNome = "Pre-Vendas" | "Vendas";
+
+/** Metas editáveis pelo usuário (modal "Editar metas"). */
+export interface MetasEdit {
+  meta_leads: number;
+  meta_reun_marcadas: number;
+  meta_reun_realizadas: number;
+  meta_vendas: number;
+  meta_ticket: number;
+  meta_faturamento: number;
+  meta_taxa_fechamento: number;
+}
+
+/** Chave de métrica usada nos cards "hero" com curva + pace. */
+export type SerieKey = "leads_abertos" | "reunioes_marcadas" | "reunioes_realizadas";
