@@ -37,6 +37,12 @@ export function Dashboard() {
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [salvandoMetas, setSalvandoMetas] = useState(false);
   const [erroMetas, setErroMetas] = useState<string | null>(null);
+  const [metasSalvoOk, setMetasSalvoOk] = useState(false);
+  // Snapshot do que foi salvo, por funil+mês — garante que reabrir o modal
+  // mostre na hora as metas gravadas, sem esperar o recarregamento (~8s) do BI.
+  const [metasSnapshot, setMetasSnapshot] = useState<
+    Record<string, MetaVendedorEdit[]>
+  >({});
 
   // Lista de usuários para o seletor "adicionar vendedor". setState em callback.
   useEffect(() => {
@@ -78,8 +84,12 @@ export function Dashboard() {
   const mesISO = (data?.period.to ?? range.to).substring(0, 7);
   const mesLabel = monthLabel(data?.period.to ?? range.from);
 
-  // Linhas iniciais do modal: vendedores do funil com suas metas atuais.
+  const snapKey = `${tab}|${mesISO}`;
+
+  // Linhas iniciais do modal: snapshot do último save (se houver) ou os
+  // vendedores do funil com suas metas atuais.
   const linhasIniciais: MetaVendedorEdit[] = useMemo(() => {
+    if (metasSnapshot[snapKey]) return metasSnapshot[snapKey];
     if (!funil) return [];
     return funil.ranking_metas.vendedores.map((v) => ({
       owner_id: v.owner_id,
@@ -92,30 +102,33 @@ export function Dashboard() {
       meta_faturamento: v.meta_faturamento,
       meta_taxa_fechamento: v.meta_taxa_fechamento,
     }));
-  }, [funil]);
+  }, [funil, metasSnapshot, snapKey]);
 
   const abrirEdicao = useCallback(() => {
     setErroMetas(null);
+    setMetasSalvoOk(false);
     setEditOpen(true);
   }, []);
 
-  // Grava as metas por vendedor na fonte e recarrega o BI.
+  // Grava as metas por vendedor na fonte; guarda snapshot e recarrega o BI.
   const handleSaveMetas = useCallback(
     (rows: MetaVendedorEdit[]) => {
       if (!funil) return;
       setSalvandoMetas(true);
       setErroMetas(null);
+      setMetasSalvoOk(false);
       saveMetasRows(funil.pipeline_id, mesISO, rows)
         .then(() => {
-          setEditOpen(false);
-          applyRange({ ...range }); // recarrega o BI com as metas novas
+          setMetasSnapshot((prev) => ({ ...prev, [snapKey]: rows }));
+          setMetasSalvoOk(true); // mantém o modal aberto com "✓ salvo"
+          applyRange({ ...range }); // recarrega o BI em segundo plano
         })
         .catch((e) =>
           setErroMetas(e instanceof Error ? e.message : "Erro ao salvar"),
         )
         .finally(() => setSalvandoMetas(false));
     },
-    [funil, mesISO, range, applyRange],
+    [funil, mesISO, range, applyRange, snapKey],
   );
 
   return (
@@ -245,9 +258,14 @@ export function Dashboard() {
           linhasIniciais={linhasIniciais}
           usuarios={usuarios}
           salvando={salvandoMetas}
+          salvoOk={metasSalvoOk}
           erro={erroMetas}
           onSave={handleSaveMetas}
-          onClose={() => setEditOpen(false)}
+          onDirty={() => setMetasSalvoOk(false)}
+          onClose={() => {
+            setEditOpen(false);
+            setMetasSalvoOk(false);
+          }}
         />
       )}
     </div>

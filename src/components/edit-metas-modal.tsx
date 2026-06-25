@@ -51,8 +51,10 @@ export function EditMetasModal({
   linhasIniciais,
   usuarios,
   salvando,
+  salvoOk,
   erro,
   onSave,
+  onDirty,
   onClose,
 }: {
   funilNome: FunilNome;
@@ -60,8 +62,10 @@ export function EditMetasModal({
   linhasIniciais: MetaVendedorEdit[];
   usuarios: Usuario[];
   salvando: boolean;
+  salvoOk: boolean;
   erro: string | null;
   onSave: (rows: MetaVendedorEdit[]) => void;
+  onDirty: () => void;
   onClose: () => void;
 }) {
   const colunas = COLUNAS[funilNome] ?? [];
@@ -84,6 +88,7 @@ export function EditMetasModal({
 
   function setValor(owner_id: number, key: keyof MetaVendedorEdit, valor: string) {
     const n = Number(valor.replace(",", "."));
+    onDirty();
     setRows((prev) =>
       prev.map((r) =>
         r.owner_id === owner_id
@@ -94,12 +99,14 @@ export function EditMetasModal({
   }
 
   function removerLinha(owner_id: number) {
+    onDirty();
     setRows((prev) => prev.filter((r) => r.owner_id !== owner_id));
   }
 
   function adicionarLinha() {
     const u = usuarios.find((x) => String(x.owner_id) === addId);
     if (!u) return;
+    onDirty();
     setRows((prev) => [...prev, linhaZerada(u.owner_id, u.nome)]);
     setAddId("");
   }
@@ -226,6 +233,11 @@ export function EditMetasModal({
             </button>
           </div>
 
+          {salvoOk && !erro && (
+            <p className="mt-3 text-sm font-medium text-[#22c55e]">
+              ✓ Metas salvas no Sheets.
+            </p>
+          )}
           {erro && <p className="mt-3 text-sm text-[#e50914]">⚠ {erro}</p>}
         </div>
 
