@@ -1,7 +1,8 @@
-import type { Funil } from "@/lib/types";
+import type { Etapa, Funil } from "@/lib/types";
 import { num, pct } from "@/lib/format";
 import { attendanceColor } from "@/lib/colors";
 import { computePace, buildChartSeries } from "@/lib/pace";
+import { mergeEtapasPreVenda } from "@/lib/etapas";
 import { HeroMetric } from "./hero-metric";
 import { RankingCard, type RankRow } from "./ranking-card";
 import { PaceSub } from "./pace-sub";
@@ -13,23 +14,36 @@ function toRows(arr: { vendedor: string; qtd: number }[]): RankRow[] {
   return arr.map((v) => ({ vendedor: v.vendedor, value: v.qtd }));
 }
 
-export function PreVendasPanel({ funil, fromISO }: { funil: Funil; fromISO: string }) {
+export function PreVendasPanel({
+  funil,
+  fromISO,
+  mostrarMetas,
+  etapasVendas,
+}: {
+  funil: Funil;
+  fromISO: string;
+  mostrarMetas: boolean;
+  etapasVendas: Etapa[];
+}) {
   const m = funil.metricas;
   const metas = m.metas;
   const dias = computePace(0, fromISO, 0);
+  const etapasFunil = mergeEtapasPreVenda(funil.pipeline_por_etapa.etapas, etapasVendas);
 
   return (
     <div className="space-y-6">
       {/* Cabeçalho da seção */}
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold tracking-tight">SDRs</h2>
-        <span className="text-sm text-[#8a8a93]">
-          Dia útil{" "}
-          <span className="font-semibold text-[#f4f4f5]">
-            {dias.diasUteisDecorridos}
-          </span>{" "}
-          de {dias.diasUteisTotais}
-        </span>
+        {mostrarMetas && (
+          <span className="text-sm text-[#8a8a93]">
+            Dia útil{" "}
+            <span className="font-semibold text-[#f4f4f5]">
+              {dias.diasUteisDecorridos}
+            </span>{" "}
+            de {dias.diasUteisTotais}
+          </span>
+        )}
       </div>
 
       {/* Cards hero com gráfico + pace */}
@@ -41,6 +55,7 @@ export function PreVendasPanel({ funil, fromISO }: { funil: Funil; fromISO: stri
           meta={metas.leads_abertos}
           serie={buildChartSeries(m.serie_diaria, "leads_abertos", metas.leads_abertos, fromISO)}
           fromISO={fromISO}
+          mostrarMeta={mostrarMetas}
         />
         <HeroMetric
           label="Reuniões marcadas"
@@ -49,6 +64,7 @@ export function PreVendasPanel({ funil, fromISO }: { funil: Funil; fromISO: stri
           meta={metas.reunioes_marcadas}
           serie={buildChartSeries(m.serie_diaria, "reunioes_marcadas", metas.reunioes_marcadas, fromISO)}
           fromISO={fromISO}
+          mostrarMeta={mostrarMetas}
         />
         <HeroMetric
           label="Reuniões realizadas"
@@ -57,6 +73,7 @@ export function PreVendasPanel({ funil, fromISO }: { funil: Funil; fromISO: stri
           meta={metas.reunioes_realizadas}
           serie={buildChartSeries(m.serie_diaria, "reunioes_realizadas", metas.reunioes_realizadas, fromISO)}
           fromISO={fromISO}
+          mostrarMeta={mostrarMetas}
         />
       </div>
 
@@ -67,7 +84,7 @@ export function PreVendasPanel({ funil, fromISO }: { funil: Funil; fromISO: stri
           icon="users"
           accent="#3b82f6"
           total={num(m.leads_abertos)}
-          sub={<PaceSub value={m.leads_abertos} meta={metas.leads_abertos} fromISO={fromISO} />}
+          sub={mostrarMetas ? <PaceSub value={m.leads_abertos} meta={metas.leads_abertos} fromISO={fromISO} /> : undefined}
           columnLabel="abertos"
           rows={toRows(m.leads_abertos_por_vendedor)}
           formatValue={num}
@@ -78,7 +95,7 @@ export function PreVendasPanel({ funil, fromISO }: { funil: Funil; fromISO: stri
           icon="calendar"
           accent="#a855f7"
           total={num(m.reunioes_marcadas)}
-          sub={<PaceSub value={m.reunioes_marcadas} meta={metas.reunioes_marcadas} fromISO={fromISO} />}
+          sub={mostrarMetas ? <PaceSub value={m.reunioes_marcadas} meta={metas.reunioes_marcadas} fromISO={fromISO} /> : undefined}
           columnLabel="marcadas"
           rows={toRows(m.reunioes_marcadas_por_vendedor)}
           formatValue={num}
@@ -89,7 +106,7 @@ export function PreVendasPanel({ funil, fromISO }: { funil: Funil; fromISO: stri
           icon="check-circle"
           accent="#22c55e"
           total={num(m.reunioes_realizadas)}
-          sub={<PaceSub value={m.reunioes_realizadas} meta={metas.reunioes_realizadas} fromISO={fromISO} />}
+          sub={mostrarMetas ? <PaceSub value={m.reunioes_realizadas} meta={metas.reunioes_realizadas} fromISO={fromISO} /> : undefined}
           columnLabel="realizadas"
           rows={toRows(m.reunioes_realizadas_por_vendedor)}
           formatValue={num}
@@ -140,7 +157,7 @@ export function PreVendasPanel({ funil, fromISO }: { funil: Funil; fromISO: stri
 
       {/* Funil + Motivos de perda */}
       <section className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <FunnelBars etapas={funil.pipeline_por_etapa.etapas} showValue={false} />
+        <FunnelBars etapas={etapasFunil} showValue={false} />
         <MotivosBars motivos={funil.ganhos_perdas.motivos_perda} />
       </section>
 

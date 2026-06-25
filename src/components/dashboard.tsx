@@ -86,6 +86,12 @@ export function Dashboard() {
 
   const snapKey = `${tab}|${mesISO}`;
 
+  // Pace/meta só fazem sentido em período de 1 mês.
+  const mesmoMes = range.from.slice(0, 7) === range.to.slice(0, 7);
+  // Etapas do pipeline de Vendas (para agregar no funil da Pré-Vendas).
+  const etapasVendas =
+    data?.funis.find((f) => f.nome === "Vendas")?.pipeline_por_etapa.etapas ?? [];
+
   // Linhas iniciais do modal: snapshot do último save (se houver) ou os
   // vendedores do funil com suas metas atuais.
   const linhasIniciais: MetaVendedorEdit[] = useMemo(() => {
@@ -236,9 +242,14 @@ export function Dashboard() {
         {!error && funil && data && (
           <div className={loading ? "opacity-60 transition-opacity" : "transition-opacity"}>
             {tab === "Vendas" ? (
-              <VendasPanel funil={funil} fromISO={range.from} />
+              <VendasPanel funil={funil} fromISO={range.from} mostrarMetas={mesmoMes} />
             ) : (
-              <PreVendasPanel funil={funil} fromISO={range.from} />
+              <PreVendasPanel
+                funil={funil}
+                fromISO={range.from}
+                mostrarMetas={mesmoMes}
+                etapasVendas={etapasVendas}
+              />
             )}
           </div>
         )}

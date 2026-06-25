@@ -14,7 +14,15 @@ function ciclo(dias: number): string {
   return `${dias.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} dias`;
 }
 
-export function VendasPanel({ funil, fromISO }: { funil: Funil; fromISO: string }) {
+export function VendasPanel({
+  funil,
+  fromISO,
+  mostrarMetas,
+}: {
+  funil: Funil;
+  fromISO: string;
+  mostrarMetas: boolean;
+}) {
   const { ganhos_perdas: gp, conversao_ciclo: cc, metricas: m } = funil;
   const metas = m.metas;
 
@@ -33,6 +41,7 @@ export function VendasPanel({ funil, fromISO }: { funil: Funil; fromISO: string 
           fromISO,
         )}
         fromISO={fromISO}
+        mostrarMeta={mostrarMetas}
       />
 
       {/* KPIs */}
@@ -42,18 +51,24 @@ export function VendasPanel({ funil, fromISO }: { funil: Funil; fromISO: string 
           value={brl(gp.ganhos.valor)}
           valueClassName="text-[#22c55e]"
           hint={
-            <PaceSub
-              value={gp.ganhos.valor}
-              meta={metas.faturamento}
-              fromISO={fromISO}
-              format="currency"
-            />
+            mostrarMetas ? (
+              <PaceSub
+                value={gp.ganhos.valor}
+                meta={metas.faturamento}
+                fromISO={fromISO}
+                format="currency"
+              />
+            ) : undefined
           }
         />
         <StatCard
           label="Vendas (qtd)"
           value={num(gp.ganhos.qtd)}
-          hint={<PaceSub value={gp.ganhos.qtd} meta={metas.vendas} fromISO={fromISO} />}
+          hint={
+            mostrarMetas ? (
+              <PaceSub value={gp.ganhos.qtd} meta={metas.vendas} fromISO={fromISO} />
+            ) : undefined
+          }
         />
         <StatCard label="Ticket Médio" value={brlOrDash(cc.ticket_medio)} />
         <StatCard label="Taxa de Fechamento" value={pct(cc.win_rate)} />

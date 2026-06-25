@@ -39,6 +39,7 @@ export function HeroMetric({
   serie,
   fromISO,
   format = "number",
+  mostrarMeta = true,
 }: {
   label: string;
   metaNoun: string;
@@ -47,11 +48,12 @@ export function HeroMetric({
   serie: SeriePonto[];
   fromISO: string;
   format?: "number" | "currency";
+  mostrarMeta?: boolean;
 }) {
   const fmt = (v: number) => (format === "currency" ? brl(v) : num(v));
   const pace = computePace(meta, fromISO, value);
   const ritmo = pace.ritmoPct;
-  const temMeta = meta > 0 && ritmo != null;
+  const temMeta = mostrarMeta && meta > 0 && ritmo != null;
   const diffAbs = temMeta ? Math.abs(Math.round(100 - ritmo!)) : 0;
   const acima = temMeta && ritmo! >= 100;
 
@@ -92,9 +94,9 @@ export function HeroMetric({
                 </p>
               </div>
             </>
-          ) : (
+          ) : mostrarMeta ? (
             <p className="mt-3 text-xs text-[#71717a]">Sem meta definida</p>
-          )}
+          ) : null}
         </div>
 
         {/* Lado direito: gráfico completo */}
