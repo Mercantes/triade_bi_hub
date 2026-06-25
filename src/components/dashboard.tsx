@@ -91,6 +91,10 @@ export function Dashboard() {
   // Etapas do pipeline de Vendas (para agregar no funil da Pré-Vendas).
   const etapasVendas =
     data?.funis.find((f) => f.nome === "Vendas")?.pipeline_por_etapa.etapas ?? [];
+  // Métricas agregadas da Pré-Vendas (fonte das "reuniões realizadas" do time).
+  const metricasPreVendas = data?.funis.find(
+    (f) => f.nome === "Pre-Vendas",
+  )?.metricas;
 
   // Linhas iniciais do modal: snapshot do último save (se houver) ou os
   // vendedores do funil com suas metas atuais.
@@ -242,7 +246,12 @@ export function Dashboard() {
         {!error && funil && data && (
           <div className={loading ? "opacity-60 transition-opacity" : "transition-opacity"}>
             {tab === "Vendas" ? (
-              <VendasPanel funil={funil} fromISO={range.from} mostrarMetas={mesmoMes} />
+              <VendasPanel
+                funil={funil}
+                fromISO={range.from}
+                mostrarMetas={mesmoMes}
+                reunioesAgg={metricasPreVendas}
+              />
             ) : (
               <PreVendasPanel
                 funil={funil}

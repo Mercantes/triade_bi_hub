@@ -1,4 +1,4 @@
-import type { Funil } from "@/lib/types";
+import type { Funil, Metricas } from "@/lib/types";
 import { brl, brlOrDash, num, pct } from "@/lib/format";
 import { attainmentBar, attainmentText } from "@/lib/colors";
 import { buildChartSeries } from "@/lib/pace";
@@ -18,13 +18,18 @@ export function VendasPanel({
   funil,
   fromISO,
   mostrarMetas,
+  reunioesAgg,
 }: {
   funil: Funil;
   fromISO: string;
   mostrarMetas: boolean;
+  /** Métricas agregadas (Pré-Vendas) — fonte das reuniões realizadas do time. */
+  reunioesAgg?: Metricas;
 }) {
   const { ganhos_perdas: gp, conversao_ciclo: cc, metricas: m } = funil;
   const metas = m.metas;
+  // "Reuniões realizadas" considera todas (Pré-Vendas + Vendas), igual à aba Pré-Vendas.
+  const rr = reunioesAgg ?? m;
 
   return (
     <div className="space-y-6">
@@ -32,12 +37,12 @@ export function VendasPanel({
       <HeroMetric
         label="Reuniões realizadas"
         metaNoun="reuniões realizadas"
-        value={m.reunioes_realizadas}
-        meta={metas.reunioes_realizadas}
+        value={rr.reunioes_realizadas}
+        meta={rr.metas.reunioes_realizadas}
         serie={buildChartSeries(
-          m.serie_diaria,
+          rr.serie_diaria,
           "reunioes_realizadas",
-          metas.reunioes_realizadas,
+          rr.metas.reunioes_realizadas,
           fromISO,
         )}
         fromISO={fromISO}
@@ -175,7 +180,7 @@ export function VendasPanel({
               </tr>
             </thead>
             <tbody className="divide-y divide-[#26262c]">
-              {[...m.reunioes_realizadas_por_vendedor]
+              {[...rr.reunioes_realizadas_por_vendedor]
                 .sort((a, b) => b.qtd - a.qtd)
                 .map((r) => (
                   <tr key={r.owner_id} className="text-[#d4d4d8]">
@@ -185,7 +190,7 @@ export function VendasPanel({
                     </td>
                   </tr>
                 ))}
-              {m.reunioes_realizadas_por_vendedor.length === 0 && (
+              {rr.reunioes_realizadas_por_vendedor.length === 0 && (
                 <tr>
                   <td colSpan={2} className="py-6 text-center text-[#8a8a93]">
                     Sem dados.
