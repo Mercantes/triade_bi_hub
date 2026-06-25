@@ -10,20 +10,34 @@ interface Coluna {
   suffix?: string;
 }
 
-// Colunas relevantes por funil (mantém a tabela enxuta).
-const COLUNAS: Record<FunilNome, Coluna[]> = {
-  "Pre-Vendas": [
+interface Grupo {
+  titulo: string;
+  cols: Coluna[];
+}
+
+const G_PRE: Grupo = {
+  titulo: "Pré-vendas",
+  cols: [
     { key: "meta_leads", label: "Leads" },
-    { key: "meta_reun_marcadas", label: "Reun. marc." },
-    { key: "meta_reun_realizadas", label: "Reun. real." },
+    { key: "meta_reun_marcadas", label: "Reun. Marc." },
+    { key: "meta_reun_realizadas", label: "Reun. Real." },
   ],
-  Vendas: [
-    { key: "meta_reun_realizadas", label: "Reun. real." },
+};
+
+const G_VENDAS: Grupo = {
+  titulo: "Vendas",
+  cols: [
     { key: "meta_vendas", label: "Vendas" },
     { key: "meta_ticket", label: "Ticket", prefix: "R$" },
     { key: "meta_faturamento", label: "Faturam.", prefix: "R$" },
-    { key: "meta_taxa_fechamento", label: "Taxa fech.", suffix: "%" },
+    { key: "meta_taxa_fechamento", label: "Taxa Fech.", suffix: "%" },
   ],
+};
+
+// Seções por funil: Pré-Vendas só pré-venda; Vendas tem as duas.
+const GRUPOS: Record<FunilNome, Grupo[]> = {
+  "Pre-Vendas": [G_PRE],
+  Vendas: [G_PRE, G_VENDAS],
 };
 
 const NOMES: Record<FunilNome, string> = {
@@ -68,7 +82,9 @@ export function EditMetasModal({
   onDirty: () => void;
   onClose: () => void;
 }) {
-  const colunas = COLUNAS[funilNome] ?? [];
+  const grupos = useMemo(() => GRUPOS[funilNome] ?? [G_PRE], [funilNome]);
+  const colunas = useMemo(() => grupos.flatMap((g) => g.cols), [grupos]);
+
   const [rows, setRows] = useState<MetaVendedorEdit[]>(() =>
     linhasIniciais.map((r) => ({ ...r })),
   );
@@ -80,7 +96,6 @@ export function EditMetasModal({
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
 
-  // Usuários ainda não presentes na tabela (para o seletor de adicionar).
   const disponiveis = useMemo(() => {
     const usados = new Set(rows.map((r) => r.owner_id));
     return usuarios.filter((u) => !usados.has(u.owner_id));
@@ -117,7 +132,7 @@ export function EditMetasModal({
       onClick={onClose}
     >
       <div
-        className="my-8 flex max-h-[88vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-[#26262c] bg-[#0d0d0f] shadow-2xl"
+        className="my-8 flex max-h-[88vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-[#26262c] bg-[#0d0d0f] shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header vermelho */}
@@ -138,19 +153,43 @@ export function EditMetasModal({
         <div className="flex-1 overflow-auto px-6 py-5">
           <p className="mb-4 text-sm text-[#8a8a93]">
             Metas mensais por vendedor (gravadas na aba <code>metas</code> do
-            Sheets). Edite os valores, adicione ou remova vendedores deste funil.
+            Sheets). Edite os valores, adicione ou remova vendedores.
           </p>
 
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-[10px] uppercase tracking-wider text-[#8a8a93]">
-                <th className="pb-2 pr-3 font-medium">Vendedor</th>
-                {colunas.map((c) => (
-                  <th key={c.key} className="pb-2 px-2 text-right font-medium">
-                    {c.label}
+              {/* Linha de grupos */}
+              <tr className="text-[10px] uppercase tracking-wider text-[#8a8a93]">
+                <th className="pb-1 pr-3" rowSpan={2}>
+                  <span className="font-medium">Vendedor</span>
+                </th>
+                {grupos.map((g, gi) => (
+                  <th
+                    key={g.titulo}
+                    colSpan={g.cols.length}
+                    className={`pb-1 text-center font-semibold text-[#2dd4bf] ${
+                      gi > 0 ? "border-l border-[#26262c]" : ""
+                    }`}
+                  >
+                    {g.titulo}
                   </th>
                 ))}
-                <th className="pb-2 pl-2" />
+                <th rowSpan={2} />
+              </tr>
+              {/* Linha de colunas */}
+              <tr className="text-[10px] uppercase tracking-wider text-[#71717a]">
+                {grupos.map((g, gi) =>
+                  g.cols.map((c, ci) => (
+                    <th
+                      key={c.key}
+                      className={`pb-2 px-2 text-right font-medium ${
+                        gi > 0 && ci === 0 ? "border-l border-[#26262c]" : ""
+                      }`}
+                    >
+                      {c.label}
+                    </th>
+                  )),
+                )}
               </tr>
             </thead>
             <tbody className="divide-y divide-[#26262c]">
@@ -159,29 +198,36 @@ export function EditMetasModal({
                   <td className="py-2 pr-3 font-medium text-[#f4f4f5]">
                     {r.vendedor}
                   </td>
-                  {colunas.map((c) => (
-                    <td key={c.key} className="px-2 py-1.5">
-                      <div className="flex items-center justify-end gap-1 rounded-md border border-[#26262c] bg-[#16161a] px-2 py-1 focus-within:border-[#2dd4bf]">
-                        {c.prefix && (
-                          <span className="text-[11px] text-[#8a8a93]">
-                            {c.prefix}
-                          </span>
-                        )}
-                        <input
-                          type="text"
-                          inputMode="decimal"
-                          value={String(r[c.key])}
-                          onChange={(e) => setValor(r.owner_id, c.key, e.target.value)}
-                          className="w-16 bg-transparent text-right text-sm tabular-nums text-[#f4f4f5] outline-none"
-                        />
-                        {c.suffix && (
-                          <span className="text-[11px] text-[#8a8a93]">
-                            {c.suffix}
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                  ))}
+                  {grupos.map((g, gi) =>
+                    g.cols.map((c, ci) => (
+                      <td
+                        key={c.key}
+                        className={`px-2 py-1.5 ${
+                          gi > 0 && ci === 0 ? "border-l border-[#26262c]" : ""
+                        }`}
+                      >
+                        <div className="flex items-center justify-end gap-1 rounded-md border border-[#26262c] bg-[#16161a] px-2 py-1 focus-within:border-[#2dd4bf]">
+                          {c.prefix && (
+                            <span className="text-[11px] text-[#8a8a93]">
+                              {c.prefix}
+                            </span>
+                          )}
+                          <input
+                            type="text"
+                            inputMode="decimal"
+                            value={String(r[c.key])}
+                            onChange={(e) => setValor(r.owner_id, c.key, e.target.value)}
+                            className="w-14 bg-transparent text-right text-sm tabular-nums text-[#f4f4f5] outline-none"
+                          />
+                          {c.suffix && (
+                            <span className="text-[11px] text-[#8a8a93]">
+                              {c.suffix}
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                    )),
+                  )}
                   <td className="py-1.5 pl-2 text-right">
                     <button
                       onClick={() => removerLinha(r.owner_id)}
