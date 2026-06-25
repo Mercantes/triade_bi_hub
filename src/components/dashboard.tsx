@@ -1,8 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { BiResponse, Funil, FunilNome, MetasEdit } from "@/lib/types";
-import { fetchBi } from "@/lib/api";
+import type {
+  BiResponse,
+  Funil,
+  FunilNome,
+  MetaVendedorEdit,
+  Usuario,
+} from "@/lib/types";
+import { fetchBi, fetchUsuarios, saveMetasRows } from "@/lib/api";
 import {
   currentMonthRange,
   displayDate,
@@ -11,7 +17,6 @@ import {
   type Range,
 } from "@/lib/dates";
 import { dateTimeBR } from "@/lib/format";
-import { loadMetasEdit, saveMetasEdit } from "@/lib/metas-store";
 import { PreVendasPanel } from "./prevendas-panel";
 import { VendasPanel } from "./vendas-panel";
 import { EditMetasModal } from "./edit-metas-modal";
@@ -27,10 +32,16 @@ export function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<FunilNome>("Vendas");
-  // Inicializa do navegador (no SSR retorna null); o conteúdo dependente de
-  // metas só renderiza após o fetch no cliente, então não há mismatch.
-  const [metasEdit, setMetasEdit] = useState<MetasEdit | null>(loadMetasEdit);
+
   const [editOpen, setEditOpen] = useState(false);
+  const [usuarios, setUsuarios] = useState<Usuario[]>([]);
+  const [salvandoMetas, setSalvandoMetas] = useState(false);
+  const [erroMetas, setErroMetas] = useState<string | null>(null);
+
+  // Lista de usuários para o seletor "adicionar vendedor". setState em callback.
+  useEffect(() => {
+    fetchUsuarios().then(setUsuarios);
+  }, []);
 
   // Aplica um novo período: marca carregando e dispara o refetch via effect.
   const applyRange = useCallback((r: Range) => {
@@ -38,8 +49,7 @@ export function Dashboard() {
     setRange(r);
   }, []);
 
-  // Fetch a cada mudança de período. setState só ocorre após o await
-  // (em callbacks), evitando renders em cascata.
+  // Fetch a cada mudança de período. setState só ocorre após o await (callbacks).
   useEffect(() => {
     let cancelled = false;
     fetchBi(range)
@@ -62,67 +72,51 @@ export function Dashboard() {
 
   const retry = useCallback(() => applyRange({ ...range }), [applyRange, range]);
 
-  const funilBase: Funil | undefined = data?.funis.find((f) => f.nome === tab);
+  const funil: Funil | undefined = data?.funis.find((f) => f.nome === tab);
 
-  // Funil com metas sobrescritas (se houver) — aplicado a pace/cards/gráficos.
-  // As metas editadas são da equipe; cada painel exibe só as que lhe dizem respeito.
-  const funil: Funil | undefined = useMemo(() => {
-    if (!funilBase) return undefined;
-    if (!metasEdit) return funilBase;
-    return {
-      ...funilBase,
-      metricas: {
-        ...funilBase.metricas,
-        metas: {
-          ...funilBase.metricas.metas,
-          leads_abertos: metasEdit.meta_leads,
-          reunioes_marcadas: metasEdit.meta_reun_marcadas,
-          reunioes_realizadas: metasEdit.meta_reun_realizadas,
-          vendas: metasEdit.meta_vendas,
-          faturamento: metasEdit.meta_faturamento,
-        },
-      },
-    };
-  }, [funilBase, metasEdit]);
+  // Mês de referência das metas = mês do fim do período (igual ao backend).
+  const mesISO = (data?.period.to ?? range.to).substring(0, 7);
+  const mesLabel = monthLabel(data?.period.to ?? range.from);
 
-  // Valores iniciais do modal: usa as metas editadas, ou deriva da API
-  // (leads/marcadas do Pré-Vendas; vendas/ticket/faturamento do Vendas).
-  const metasIniciais: MetasEdit = useMemo(() => {
-    if (metasEdit) return metasEdit;
-    const pv = data?.funis.find((f) => f.nome === "Pre-Vendas")?.metricas.metas;
-    const vd = data?.funis.find((f) => f.nome === "Vendas");
-    const vdMetas = vd?.metricas.metas;
-    const taxas = (vd?.ranking_metas.vendedores ?? [])
-      .map((x) => x.meta_taxa_fechamento)
-      .filter((n) => n > 0);
-    const taxaMedia = taxas.length
-      ? taxas.reduce((a, b) => a + b, 0) / taxas.length
-      : 0;
-    return {
-      meta_leads: pv?.leads_abertos ?? 0,
-      meta_reun_marcadas: pv?.reunioes_marcadas ?? 0,
-      meta_reun_realizadas: vdMetas?.reunioes_realizadas || pv?.reunioes_realizadas || 0,
-      meta_vendas: vdMetas?.vendas ?? 0,
-      meta_ticket:
-        vdMetas && vdMetas.vendas > 0
-          ? Math.round(vdMetas.faturamento / vdMetas.vendas)
-          : 0,
-      meta_faturamento: vdMetas?.faturamento ?? 0,
-      meta_taxa_fechamento: Math.round(taxaMedia * 10) / 10,
-    };
-  }, [metasEdit, data]);
+  // Linhas iniciais do modal: vendedores do funil com suas metas atuais.
+  const linhasIniciais: MetaVendedorEdit[] = useMemo(() => {
+    if (!funil) return [];
+    return funil.ranking_metas.vendedores.map((v) => ({
+      owner_id: v.owner_id,
+      vendedor: v.vendedor,
+      meta_leads: v.meta_leads,
+      meta_reun_marcadas: v.meta_reun_marcadas,
+      meta_reun_realizadas: v.meta_reun_realizadas,
+      meta_vendas: v.meta_vendas,
+      meta_ticket: v.meta_ticket,
+      meta_faturamento: v.meta_faturamento,
+      meta_taxa_fechamento: v.meta_taxa_fechamento,
+    }));
+  }, [funil]);
 
-  const handleSaveMetas = useCallback((m: MetasEdit) => {
-    setMetasEdit(m);
-    saveMetasEdit(m);
-    setEditOpen(false);
+  const abrirEdicao = useCallback(() => {
+    setErroMetas(null);
+    setEditOpen(true);
   }, []);
 
-  const handleResetMetas = useCallback(() => {
-    setMetasEdit(null);
-    saveMetasEdit(null);
-    setEditOpen(false);
-  }, []);
+  // Grava as metas por vendedor na fonte e recarrega o BI.
+  const handleSaveMetas = useCallback(
+    (rows: MetaVendedorEdit[]) => {
+      if (!funil) return;
+      setSalvandoMetas(true);
+      setErroMetas(null);
+      saveMetasRows(funil.pipeline_id, mesISO, rows)
+        .then(() => {
+          setEditOpen(false);
+          applyRange({ ...range }); // recarrega o BI com as metas novas
+        })
+        .catch((e) =>
+          setErroMetas(e instanceof Error ? e.message : "Erro ao salvar"),
+        )
+        .finally(() => setSalvandoMetas(false));
+    },
+    [funil, mesISO, range, applyRange],
+  );
 
   return (
     <div className="min-h-screen">
@@ -183,7 +177,7 @@ export function Dashboard() {
               className="rounded-lg border border-[#26262c] bg-[#16161a] px-2.5 py-1.5 text-xs text-[#f4f4f5] outline-none focus:border-[#e50914] [color-scheme:dark]"
             />
             <button
-              onClick={() => setEditOpen(true)}
+              onClick={abrirEdicao}
               disabled={!funil}
               className="rounded-lg border border-[#2dd4bf]/40 px-3 py-1.5 text-xs font-medium text-[#2dd4bf] transition-colors hover:bg-[#2dd4bf]/10 disabled:cursor-not-allowed disabled:opacity-40"
             >
@@ -243,13 +237,16 @@ export function Dashboard() {
         )}
       </main>
 
-      {editOpen && data && (
+      {editOpen && funil && (
         <EditMetasModal
-          mes={monthLabel(range.from)}
-          inicial={metasIniciais}
-          temOverride={metasEdit !== null}
+          key={tab}
+          funilNome={tab}
+          mes={mesLabel}
+          linhasIniciais={linhasIniciais}
+          usuarios={usuarios}
+          salvando={salvandoMetas}
+          erro={erroMetas}
           onSave={handleSaveMetas}
-          onReset={handleResetMetas}
           onClose={() => setEditOpen(false)}
         />
       )}

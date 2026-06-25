@@ -130,8 +130,16 @@ export interface BiResponse {
 
 export type FunilNome = "Pre-Vendas" | "Vendas";
 
-/** Metas editáveis pelo usuário (modal "Editar metas"). */
-export interface MetasEdit {
+/** Usuário (vendedor) para o seletor de "adicionar vendedor". */
+export interface Usuario {
+  owner_id: number;
+  nome: string;
+}
+
+/** Linha editável de meta por vendedor (aba `metas`, por funil/mês). */
+export interface MetaVendedorEdit {
+  owner_id: number;
+  vendedor: string;
   meta_leads: number;
   meta_reun_marcadas: number;
   meta_reun_realizadas: number;
