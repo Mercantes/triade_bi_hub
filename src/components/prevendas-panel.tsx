@@ -78,7 +78,7 @@ export function PreVendasPanel({
       </div>
 
       {/* Grid de cards por vendedor */}
-      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <RankingCard
           title="Leads Abertos"
           icon="users"
@@ -138,6 +138,16 @@ export function PreVendasPanel({
           rows={toRows(m.leads_para_abrir_por_vendedor)}
           formatValue={num}
           averageLabel="média na fila/vendedor"
+        />
+        <RankingCard
+          title="Atividades Realizadas"
+          icon="calendar-check"
+          accent="#f97316"
+          total={num(m.atividades_realizadas ?? 0)}
+          columnLabel="realizadas"
+          rows={toRows(m.atividades_realizadas_por_vendedor ?? [])}
+          formatValue={num}
+          averageLabel="média atividades/vendedor"
         />
         <RankingCard
           title="Atividades Atrasadas"

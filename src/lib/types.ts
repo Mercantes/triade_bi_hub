@@ -102,6 +102,9 @@ export interface Metricas {
   atividades_atrasadas: number;
   metas: Metas;
   atividades_atrasadas_por_vendedor: VendedorContagem[];
+  // Atividades concluídas (status 2) no período — só no funil Pré-Vendas (time todo).
+  atividades_realizadas?: number;
+  atividades_realizadas_por_vendedor?: VendedorContagem[];
   reunioes_marcadas_por_vendedor: VendedorContagem[];
   reunioes_realizadas_por_vendedor: VendedorContagem[];
   leads_abertos_por_vendedor: VendedorContagem[];
