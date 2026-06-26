@@ -36,6 +36,7 @@ function doGet(e) {
     var stages = indexBy_(stagesArr, 'stage_id');
     var users = indexBy_(readSheet_('dim_users'), 'user_id');
     var reasons = indexBy_(readSheet_('dim_loss_reasons'), 'loss_reason_id');
+    var origins = indexBy_(readSheet_('dim_origins'), 'origin_id');
     var metas = readSheet_('metas');
     var hist = readSheet_('stage_history');
     var acts = readSheet_('activities');
@@ -55,6 +56,7 @@ function doGet(e) {
         pipeline_por_etapa: pipelinePorEtapa_(ds, stages),
         ganhos_perdas: ganhosPerdas_(ds, period, reasons),
         conversao_ciclo: conversaoCiclo_(ds, period),
+        conversao_origem: conversaoOrigem_(ds, period, origins),
         ranking_metas: rankingMetas_(ds, period, users, metas, pid),
         metricas: (String(pid) === '100776')
           ? metricasPreVendasAgg_(PREVENDAS_PIPES, deals, stagesArr, hist, acts, period, users, metas)
@@ -152,6 +154,32 @@ function conversaoCiclo_(deals, period) {
     ticket_medio: ganhasComValor.length ? round2_(sumVal_(ganhasComValor) / ganhasComValor.length) : 0,
     fechadas_periodo: fechadas
   };
+}
+
+/* ---------- Bloco 3b: Conversao por origem do lead ---------- */
+// Base = deals criados no periodo, agrupados por origem. Para cada origem:
+// total = leads criados | ganhos = quantos viraram venda (status 1) | taxa = ganhos/total.
+function conversaoOrigem_(deals, period, origins) {
+  var base = deals.filter(function (d) { return inPeriod_(d.created_at, period); });
+  var by = {};
+  base.forEach(function (d) {
+    var oid = (d.origin_id === '' || d.origin_id == null) ? 'sem' : String(d.origin_id);
+    if (!by[oid]) {
+      var nome = (oid === 'sem')
+        ? 'Sem origem'
+        : ((origins[oid] || {}).origin_name || ('Origem ' + oid));
+      by[oid] = { origem: nome, total: 0, ganhos: 0 };
+    }
+    by[oid].total += 1;
+    if (Number(d.status) === 1) by[oid].ganhos += 1;
+  });
+  var rows = Object.keys(by).map(function (k) {
+    var r = by[k];
+    r.taxa = r.total ? round2_((r.ganhos / r.total) * 100) : 0;
+    return r;
+  });
+  rows.sort(function (a, b) { return b.total - a.total; });
+  return rows;
 }
 
 /* ---------- Bloco 4: Ranking + metas (por vendedor) ---------- */

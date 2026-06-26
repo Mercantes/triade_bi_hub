@@ -246,7 +246,21 @@ function syncDimensions() {
   replaceSheet_('dim_loss_reasons', ['loss_reason_id','loss_reason_name'],
     reasons.map(function (r) { return [r.id, r.name]; }));
 
-  Logger.log('Dimensoes: ' + stages.length + ' etapas, ' + users.length + ' usuarios, ' + reasons.length + ' motivos');
+  // Origens dos deals (de-para origin_id -> nome). Endpoint pode variar; protege com try/catch
+  // para nao derrubar o sync das outras dimensoes caso o endpoint nao exista.
+  var nOrigins = 0;
+  try {
+    var origins = fetchAll_('/originDeals', {}).data || [];
+    replaceSheet_('dim_origins', ['origin_id','origin_name'],
+      origins.map(function (o) { return [o.id, o.name]; }));
+    nOrigins = origins.length;
+  } catch (eOrig) {
+    sheetOrCreate_('dim_origins', ['origin_id','origin_name']);
+    Logger.log('Origens: falha ao buscar /originDeals (' + eOrig + ') — dim_origins mantida vazia');
+  }
+
+  Logger.log('Dimensoes: ' + stages.length + ' etapas, ' + users.length + ' usuarios, ' +
+    reasons.length + ' motivos, ' + nOrigins + ' origens');
 }
 
 /* ====================== Helpers de planilha ====================== */
@@ -313,6 +327,7 @@ function setup() {
   sheetOrCreate_('dim_stages', ['stage_id','stage_name','pipeline_id','order']);
   sheetOrCreate_('dim_users', ['user_id','user_name','team']);
   sheetOrCreate_('dim_loss_reasons', ['loss_reason_id','loss_reason_name']);
+  sheetOrCreate_('dim_origins', ['origin_id','origin_name']);
   sheetOrCreate_('metas', ['owner_id','pipeline_id','mes','meta_leads','meta_reun_marcadas',
     'meta_reun_realizadas','meta_vendas','meta_ticket','meta_faturamento','meta_taxa_fechamento']);
   sheetOrCreate_('stage_history', ['id','deal_id','pipeline_id','in_stage_id','out_stage_id','in_user_id','out_user_id','in_date','out_date']);

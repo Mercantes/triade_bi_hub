@@ -1,0 +1,68 @@
+import type { OrigemConversao } from "@/lib/types";
+import { num, pct } from "@/lib/format";
+import { Card, SectionTitle } from "./ui";
+
+function shorten(s: string, max = 28): string {
+  return s.length > max ? `${s.slice(0, max - 1)}…` : s;
+}
+
+/** Cor da taxa de conversão: verde forte / amarelo / vermelho. */
+function taxaColor(taxa: number): string {
+  if (taxa >= 20) return "text-[#22c55e]";
+  if (taxa >= 8) return "text-[#eab308]";
+  return "text-[#f87171]";
+}
+
+export function ConversaoOrigemCard({
+  origens,
+  limit = 8,
+}: {
+  origens: OrigemConversao[];
+  limit?: number;
+}) {
+  // Já vem ordenado por total (volume) do backend; corta no limite.
+  const rows = origens.slice(0, limit);
+  const max = Math.max(1, ...rows.map((o) => o.total));
+
+  return (
+    <Card className="p-5">
+      <SectionTitle>Conversão por origem</SectionTitle>
+      {rows.length === 0 ? (
+        <p className="py-8 text-center text-sm text-[#71717a]">Sem dados.</p>
+      ) : (
+        <div className="space-y-2.5">
+          {rows.map((o) => (
+            <div key={o.origem} className="flex items-center gap-3 text-sm">
+              <span
+                className="w-32 shrink-0 truncate text-right text-xs text-[#a1a1aa]"
+                title={o.origem}
+              >
+                {shorten(o.origem)}
+              </span>
+              <div className="h-5 flex-1">
+                <div
+                  className="flex h-full items-center justify-end rounded bg-[#2dd4bf]/70 px-2"
+                  style={{ width: `${Math.max((o.total / max) * 100, 6)}%` }}
+                >
+                  <span className="text-[11px] font-semibold tabular-nums text-[#0d0d0f]">
+                    {num(o.total)}
+                  </span>
+                </div>
+              </div>
+              <span
+                className={`w-24 shrink-0 text-right text-xs tabular-nums ${taxaColor(o.taxa)}`}
+                title={`${num(o.ganhos)} de ${num(o.total)} ganhos`}
+              >
+                <span className="font-semibold">{pct(o.taxa)}</span>
+                <span className="text-[#71717a]"> · {num(o.ganhos)}v</span>
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+      <p className="mt-3 text-[11px] text-[#71717a]">
+        Leads criados no período por origem · taxa = vendas / leads
+      </p>
+    </Card>
+  );
+}

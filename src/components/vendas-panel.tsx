@@ -7,6 +7,7 @@ import { HeroMetric } from "./hero-metric";
 import { PaceSub } from "./pace-sub";
 import { FunnelBars } from "./funnel-bars";
 import { MotivosBars } from "./motivos-bars";
+import { ConversaoOrigemCard } from "./conversao-origem-card";
 import { ReunioesTable } from "./reunioes-table";
 
 function ciclo(dias: number): string {
@@ -116,6 +117,9 @@ export function VendasPanel({
           <MotivosBars motivos={gp.motivos_perda} />
         </div>
       </section>
+
+      {/* Conversão por origem do lead */}
+      <ConversaoOrigemCard origens={funil.conversao_origem ?? []} />
 
       {/* Ranking meta R$ + Reuniões realizadas por vendedor */}
       <section className="grid grid-cols-1 gap-6 lg:grid-cols-2">

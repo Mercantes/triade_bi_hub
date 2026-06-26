@@ -26,6 +26,13 @@ export interface GanhosPerdas {
   motivos_perda: MotivoPerda[];
 }
 
+export interface OrigemConversao {
+  origem: string;
+  total: number;
+  ganhos: number;
+  taxa: number;
+}
+
 export interface ConversaoCiclo {
   win_rate: number;
   ciclo_medio_dias: number;
@@ -120,6 +127,8 @@ export interface Funil {
   pipeline_por_etapa: PipelinePorEtapa;
   ganhos_perdas: GanhosPerdas;
   conversao_ciclo: ConversaoCiclo;
+  /** Conversão por origem do lead (opcional: só após republicar o Apps Script). */
+  conversao_origem?: OrigemConversao[];
   ranking_metas: { vendedores: VendedorMeta[] };
   metricas: Metricas;
 }
