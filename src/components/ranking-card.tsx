@@ -39,6 +39,8 @@ export function RankingCard({
   formatValue,
   averageLabel,
   averageOverride,
+  unavailable = false,
+  unavailableHint,
 }: {
   title: string;
   icon: IconName;
@@ -52,6 +54,10 @@ export function RankingCard({
   averageLabel: string;
   /** Quando definido, sobrescreve a média calculada (ex.: total/qtd). */
   averageOverride?: number;
+  /** Quando true, oculta os valores (mostra "—") — ex.: métrica que só vale por mês. */
+  unavailable?: boolean;
+  /** Texto exibido no lugar do ranking quando unavailable. */
+  unavailableHint?: string;
 }) {
   const sorted = [...rows].sort((a, b) => b.value - a.value).slice(0, 5);
   const avg =
@@ -75,9 +81,11 @@ export function RankingCard({
           <Icon name={icon} />
         </span>
         <p className="text-[28px] font-extrabold leading-none tabular-nums text-[#f4f4f5]">
-          {total}
+          {unavailable ? "—" : total}
         </p>
-        {sub && <div className="mt-2 text-center text-[11px]">{sub}</div>}
+        {!unavailable && sub && (
+          <div className="mt-2 text-center text-[11px]">{sub}</div>
+        )}
       </div>
 
       {/* Cabeçalho da coluna */}
@@ -87,19 +95,27 @@ export function RankingCard({
 
       {/* Ranking */}
       <ul className="mt-2 flex-1 space-y-2 py-0.5">
-        {sorted.map((r, i) => (
-          <li key={r.vendedor} className="flex items-center gap-2 text-[13px]">
-            <Avatar name={r.vendedor} i={i} />
-            <span className="truncate text-[#d4d4d8]">{r.vendedor}</span>
-            <span className="ml-auto shrink-0 font-semibold tabular-nums text-[#f4f4f5]">
-              {formatValue(r.value)}
-            </span>
+        {unavailable ? (
+          <li className="px-2 py-4 text-center text-[11px] leading-relaxed text-[#71717a]">
+            {unavailableHint ?? "Disponível por mês."}
           </li>
-        ))}
-        {sorted.length === 0 && (
-          <li className="py-2 text-center text-[11px] text-[#71717a]">
-            Sem dados.
-          </li>
+        ) : (
+          <>
+            {sorted.map((r, i) => (
+              <li key={r.vendedor} className="flex items-center gap-2 text-[13px]">
+                <Avatar name={r.vendedor} i={i} />
+                <span className="truncate text-[#d4d4d8]">{r.vendedor}</span>
+                <span className="ml-auto shrink-0 font-semibold tabular-nums text-[#f4f4f5]">
+                  {formatValue(r.value)}
+                </span>
+              </li>
+            ))}
+            {sorted.length === 0 && (
+              <li className="py-2 text-center text-[11px] text-[#71717a]">
+                Sem dados.
+              </li>
+            )}
+          </>
         )}
       </ul>
 
@@ -109,7 +125,7 @@ export function RankingCard({
           {averageLabel}
         </span>
         <span className="shrink-0 text-sm font-semibold tabular-nums text-[#2dd4bf]">
-          {formatValue(Math.round(avg))}
+          {unavailable ? "—" : formatValue(Math.round(avg))}
         </span>
       </div>
     </Card>

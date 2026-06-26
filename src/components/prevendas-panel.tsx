@@ -116,6 +116,8 @@ export function PreVendasPanel({
           title="Taxa de Comparecimento"
           icon="user-check"
           accent="#2dd4bf"
+          unavailable={!mostrarMetas}
+          unavailableHint="Taxa só faz sentido em período de 1 mês."
           total={
             <span className={attendanceColor(m.taxa_comparecimento)}>
               {pct(m.taxa_comparecimento)}
@@ -167,6 +169,8 @@ export function PreVendasPanel({
           title="No-Show"
           icon="user-x"
           accent="#f59e0b"
+          unavailable={!mostrarMetas}
+          unavailableHint="Taxa só faz sentido em período de 1 mês."
           total={
             m.taxa_comparecimento == null ? (
               "—"
