@@ -31,7 +31,7 @@ export function Dashboard() {
   const [data, setData] = useState<BiResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [tab, setTab] = useState<FunilNome>("Vendas");
+  const [tab, setTab] = useState<FunilNome>("Pre-Vendas");
 
   const [editOpen, setEditOpen] = useState(false);
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
