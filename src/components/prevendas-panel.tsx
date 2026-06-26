@@ -1,6 +1,6 @@
 import type { Etapa, Funil } from "@/lib/types";
 import { num, pct } from "@/lib/format";
-import { attendanceColor } from "@/lib/colors";
+import { attendanceColor, noShowColor } from "@/lib/colors";
 import { computePace, buildChartSeries } from "@/lib/pace";
 import { mergeEtapasPreVenda } from "@/lib/etapas";
 import { HeroMetric } from "./hero-metric";
@@ -162,6 +162,27 @@ export function PreVendasPanel({
           rows={toRows(m.atividades_atrasadas_por_vendedor)}
           formatValue={num}
           averageLabel="média atrasadas/vendedor"
+        />
+        <RankingCard
+          title="No-Show"
+          icon="user-x"
+          accent="#f59e0b"
+          total={
+            m.taxa_comparecimento == null ? (
+              "—"
+            ) : (
+              <span className={noShowColor(100 - m.taxa_comparecimento)}>
+                {pct(100 - m.taxa_comparecimento)}
+              </span>
+            )
+          }
+          columnLabel="no-show"
+          rows={m.comparecimento_por_vendedor.map((v) => ({
+            vendedor: v.vendedor,
+            value: 100 - v.pct,
+          }))}
+          formatValue={(v) => pct(v)}
+          averageLabel="média no-show/vendedor"
         />
       </section>
 

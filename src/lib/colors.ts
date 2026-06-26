@@ -11,6 +11,13 @@ export function attendanceColor(v: number): string {
   return "text-[#e50914]";
 }
 
+/** Taxa de no-show (inverso do comparecimento): verde ≤30, amarelo 31–60, vermelho >60. */
+export function noShowColor(v: number): string {
+  if (v <= 30) return "text-[#22c55e]";
+  if (v <= 60) return "text-[#eab308]";
+  return "text-[#e50914]";
+}
+
 /** Ritmo/pace: verde ≥100, amarelo 80–99, vermelho <80. */
 export function ritmoColor(pct: number): string {
   if (pct >= 100) return "text-[#22c55e]";
