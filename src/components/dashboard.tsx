@@ -145,7 +145,7 @@ export function Dashboard() {
     <div className="min-h-screen">
       {/* Header */}
       <header className="sticky top-0 z-10 border-b border-[#26262c] bg-[#0d0d0f]/95 backdrop-blur">
-        <div className="mx-auto flex max-w-[1180px] flex-wrap items-center justify-between gap-4 px-6 py-3 lg:px-10">
+        <div className="mx-auto flex max-w-[1320px] flex-wrap items-center justify-between gap-4 px-6 py-3 lg:px-10">
           {/* Título */}
           <div className="flex items-center gap-2">
             <span className="flex h-7 w-7 items-center justify-center rounded-md bg-[#e50914] text-sm font-black text-white">
@@ -210,7 +210,7 @@ export function Dashboard() {
         </div>
 
         {/* Linha de atualização */}
-        <div className="mx-auto max-w-[1180px] px-6 pb-2 text-xs text-[#8a8a93] lg:px-10">
+        <div className="mx-auto max-w-[1320px] px-6 pb-2 text-xs text-[#8a8a93] lg:px-10">
           <span>
             Período: {displayDate(range.from)} – {displayDate(range.to)}
             {" · "}
@@ -220,7 +220,7 @@ export function Dashboard() {
       </header>
 
       {/* Conteúdo */}
-      <main className="mx-auto max-w-[1180px] px-6 py-8 lg:px-10">
+      <main className="mx-auto max-w-[1320px] px-6 py-8 lg:px-10">
         {error && (
           <div className="rounded-xl border border-[#e50914]/40 bg-[#e50914]/10 p-6 text-center">
             <p className="font-semibold text-[#e50914]">
