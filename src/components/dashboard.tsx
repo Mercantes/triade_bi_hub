@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type {
   BiResponse,
   Funil,
@@ -49,8 +49,12 @@ export function Dashboard() {
     fetchUsuarios().then(setUsuarios);
   }, []);
 
+  // Próximo refetch deve ignorar o cache do proxy (ex.: logo após salvar metas).
+  const freshRef = useRef(false);
+
   // Aplica um novo período: marca carregando e dispara o refetch via effect.
-  const applyRange = useCallback((r: Range) => {
+  const applyRange = useCallback((r: Range, fresh = false) => {
+    freshRef.current = fresh;
     setLoading(true);
     setRange(r);
   }, []);
@@ -58,7 +62,9 @@ export function Dashboard() {
   // Fetch a cada mudança de período. setState só ocorre após o await (callbacks).
   useEffect(() => {
     let cancelled = false;
-    fetchBi(range)
+    const fresh = freshRef.current;
+    freshRef.current = false;
+    fetchBi(range, { fresh })
       .then((res) => {
         if (cancelled) return;
         setData(res);
@@ -131,7 +137,7 @@ export function Dashboard() {
         .then(() => {
           setMetasSnapshot((prev) => ({ ...prev, [snapKey]: rows }));
           setMetasSalvoOk(true); // mantém o modal aberto com "✓ salvo"
-          applyRange({ ...range }); // recarrega o BI em segundo plano
+          applyRange({ ...range }, true); // recarrega o BI (sem cache) em segundo plano
         })
         .catch((e) =>
           setErroMetas(e instanceof Error ? e.message : "Erro ao salvar"),

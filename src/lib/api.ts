@@ -24,9 +24,16 @@ function normalizaNomes_(node: unknown): void {
   }
 }
 
-/** Busca os dados do BI via proxy interno (/api/bi). */
-export async function fetchBi(range: Range): Promise<BiResponse> {
+/**
+ * Busca os dados do BI via proxy interno (/api/bi).
+ * `fresh` ignora o cache do proxy (usado após salvar metas, para refletir na hora).
+ */
+export async function fetchBi(
+  range: Range,
+  opts?: { fresh?: boolean },
+): Promise<BiResponse> {
   const params = new URLSearchParams({ from: range.from, to: range.to });
+  if (opts?.fresh) params.set("nocache", "1");
   const res = await fetch(`/api/bi?${params.toString()}`, { cache: "no-store" });
 
   if (!res.ok) {
