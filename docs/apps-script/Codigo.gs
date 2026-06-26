@@ -516,7 +516,10 @@ function inPeriod_(dateStr, period) { var d = parseDate_(dateStr); return d && d
 function parseDate_(v) {
   if (!v) return null;
   if (v instanceof Date) return v;
-  var d = new Date(String(v).trim().replace(' ', 'T'));
+  var s = String(v).trim();
+  var m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (m) return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])); // data pura = meia-noite LOCAL (corrige o -1 dia)
+  var d = new Date(s.replace(' ', 'T'));
   return isNaN(d.getTime()) ? null : d;
 }
 function fmt_(d) { return Utilities.formatDate(d, Session.getScriptTimeZone(), 'yyyy-MM-dd'); }

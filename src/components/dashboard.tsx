@@ -244,22 +244,32 @@ export function Dashboard() {
         )}
 
         {!error && funil && data && (
-          <div className={loading ? "opacity-60 transition-opacity" : "transition-opacity"}>
-            {tab === "Vendas" ? (
-              <VendasPanel
-                funil={funil}
-                fromISO={range.from}
-                mostrarMetas={mesmoMes}
-                reunioesAgg={metricasPreVendas}
-              />
-            ) : (
-              <PreVendasPanel
-                funil={funil}
-                fromISO={range.from}
-                mostrarMetas={mesmoMes}
-                etapasVendas={etapasVendas}
-              />
+          <div className="relative">
+            {loading && (
+              <div className="pointer-events-none absolute inset-0 z-10 flex items-start justify-center pt-24">
+                <div className="flex items-center gap-2 rounded-full border border-[#26262c] bg-[#16161a] px-4 py-2 text-sm font-medium text-[#d4d4d8] shadow-lg">
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-[#26262c] border-t-[#e50914]" />
+                  Atualizando…
+                </div>
+              </div>
             )}
+            <div className={loading ? "opacity-40 transition-opacity" : "transition-opacity"}>
+              {tab === "Vendas" ? (
+                <VendasPanel
+                  funil={funil}
+                  fromISO={range.from}
+                  mostrarMetas={mesmoMes}
+                  reunioesAgg={metricasPreVendas}
+                />
+              ) : (
+                <PreVendasPanel
+                  funil={funil}
+                  fromISO={range.from}
+                  mostrarMetas={mesmoMes}
+                  etapasVendas={etapasVendas}
+                />
+              )}
+            </div>
           </div>
         )}
 
