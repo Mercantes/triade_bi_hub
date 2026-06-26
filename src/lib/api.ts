@@ -1,6 +1,29 @@
 import type { BiResponse, MetaVendedorEdit, Usuario } from "./types";
 import type { Range } from "./dates";
 
+/**
+ * Troca o rótulo técnico "SEM USUARIO" (usuário-placeholder do PipeRun, sem
+ * responsável atribuído) por algo apresentável, em qualquer campo de nome.
+ * Roda uma vez sobre a resposta inteira do BI — pega rankings, reuniões etc.
+ */
+function normalizaNomes_(node: unknown): void {
+  if (Array.isArray(node)) {
+    node.forEach(normalizaNomes_);
+    return;
+  }
+  if (node && typeof node === "object") {
+    const obj = node as Record<string, unknown>;
+    for (const k of Object.keys(obj)) {
+      const v = obj[k];
+      if (typeof v === "string" && /^\s*sem\s*usuario\s*$/i.test(v)) {
+        obj[k] = "Não atribuído";
+      } else if (v && typeof v === "object") {
+        normalizaNomes_(v);
+      }
+    }
+  }
+}
+
 /** Busca os dados do BI via proxy interno (/api/bi). */
 export async function fetchBi(range: Range): Promise<BiResponse> {
   const params = new URLSearchParams({ from: range.from, to: range.to });
@@ -21,6 +44,7 @@ export async function fetchBi(range: Range): Promise<BiResponse> {
   if (!data.ok) {
     throw new Error("O endpoint retornou ok=false");
   }
+  normalizaNomes_(data);
   return data;
 }
 
