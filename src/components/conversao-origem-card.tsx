@@ -30,38 +30,51 @@ export function ConversaoOrigemCard({
       {rows.length === 0 ? (
         <p className="py-8 text-center text-sm text-[#71717a]">Sem dados.</p>
       ) : (
-        <div className="space-y-2.5">
-          {rows.map((o) => (
-            <div key={o.origem} className="flex items-center gap-3 text-sm">
-              <span
-                className="w-32 shrink-0 truncate text-right text-xs text-[#a1a1aa]"
-                title={o.origem}
-              >
-                {shorten(o.origem)}
-              </span>
-              <div className="h-5 flex-1">
-                <div
-                  className="flex h-full items-center justify-end rounded bg-[#2dd4bf]/70 px-2"
-                  style={{ width: `${Math.max((o.total / max) * 100, 6)}%` }}
+        <>
+          {/* Cabeçalho das colunas */}
+          <div className="flex items-center gap-3 pb-2 text-[10px] font-medium uppercase tracking-wider text-[#71717a]">
+            <span className="w-32 shrink-0 text-right">Origem</span>
+            <span className="flex-1">Leads gerados</span>
+            <span className="w-16 shrink-0 text-right">Vendas</span>
+            <span className="w-16 shrink-0 text-right">Conv.</span>
+          </div>
+
+          <div className="space-y-2.5">
+            {rows.map((o) => (
+              <div key={o.origem} className="flex items-center gap-3 text-sm">
+                <span
+                  className="w-32 shrink-0 truncate text-right text-xs text-[#d4d4d8]"
+                  title={o.origem}
                 >
-                  <span className="text-[11px] font-semibold tabular-nums text-[#0d0d0f]">
-                    {num(o.total)}
-                  </span>
+                  {shorten(o.origem)}
+                </span>
+                <div className="h-5 flex-1">
+                  <div
+                    className="flex h-full items-center justify-end rounded bg-[#2dd4bf]/70 px-2"
+                    style={{ width: `${Math.max((o.total / max) * 100, 6)}%` }}
+                  >
+                    <span className="text-[11px] font-semibold tabular-nums text-[#0d0d0f]">
+                      {num(o.total)}
+                    </span>
+                  </div>
                 </div>
+                <span className="w-16 shrink-0 text-right text-xs font-semibold tabular-nums text-[#f4f4f5]">
+                  {num(o.ganhos)}
+                </span>
+                <span
+                  className={`w-16 shrink-0 text-right text-xs font-semibold tabular-nums ${taxaColor(o.taxa)}`}
+                >
+                  {pct(o.taxa)}
+                </span>
               </div>
-              <span
-                className={`w-24 shrink-0 text-right text-xs tabular-nums ${taxaColor(o.taxa)}`}
-                title={`${num(o.ganhos)} de ${num(o.total)} ganhos`}
-              >
-                <span className="font-semibold">{pct(o.taxa)}</span>
-                <span className="text-[#71717a]"> · {num(o.ganhos)}v</span>
-              </span>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        </>
       )}
       <p className="mt-3 text-[11px] text-[#71717a]">
-        Leads criados no período por origem · taxa = vendas / leads
+        <span className="text-[#a1a1aa]">Leads gerados</span> = oportunidades criadas no
+        período por canal · <span className="text-[#a1a1aa]">Vendas</span> = quantas
+        fecharam · <span className="text-[#a1a1aa]">Conv.</span> = vendas ÷ leads
       </p>
     </Card>
   );
