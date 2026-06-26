@@ -250,13 +250,13 @@ function syncDimensions() {
   // para nao derrubar o sync das outras dimensoes caso o endpoint nao exista.
   var nOrigins = 0;
   try {
-    var origins = fetchAll_('/originDeals', {}).data || [];
+    var origins = fetchAll_('/origins', {}).data || [];
     replaceSheet_('dim_origins', ['origin_id','origin_name'],
       origins.map(function (o) { return [o.id, o.name]; }));
     nOrigins = origins.length;
   } catch (eOrig) {
     sheetOrCreate_('dim_origins', ['origin_id','origin_name']);
-    Logger.log('Origens: falha ao buscar /originDeals (' + eOrig + ') — dim_origins mantida vazia');
+    Logger.log('Origens: falha ao buscar /origins (' + eOrig + ') — dim_origins mantida vazia');
   }
 
   Logger.log('Dimensoes: ' + stages.length + ' etapas, ' + users.length + ' usuarios, ' +

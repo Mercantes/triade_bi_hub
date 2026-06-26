@@ -13,9 +13,17 @@ partir do repositório — é backup/referência. A fonte de verdade é o Apps S
   - `syncDiarioB`: histórico de etapas + atividades abertas + atividades realizadas
 
 ## Abas do Sheets (banco)
-`deals`, `dim_stages`, `dim_users`, `dim_loss_reasons`, `stage_history`,
+`deals`, `dim_stages`, `dim_users`, `dim_loss_reasons`, `dim_origins`
+(de-para `origin_id → nome`, via `/origins`), `stage_history`,
 `activities` (abertas, status 0), `activities_done` (realizadas, status 2),
 `metas` (metas por vendedor/mês), `_control` (last_sync incremental).
+
+## Origens (Conversão por Origem)
+- `syncDimensions` popula `dim_origins` a partir do endpoint **`GET /origins`** do PipeRun
+  (ex.: ProspectAI, Prospecção Ativa, Consultantes). O `doGet` usa esse de-para no bloco
+  `conversao_origem` (leads criados → vendas → taxa) de cada funil.
+- Se a `dim_origins` ficar vazia, o dashboard mostra "Origem {id}" no lugar do nome — rode
+  `syncDimensions` para repopular.
 
 ## Como atualizar este backup
 Sempre que mudar o Apps Script no Google, atualize o arquivo correspondente aqui e commite,
