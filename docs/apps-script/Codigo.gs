@@ -57,6 +57,7 @@ function doGet(e) {
         ganhos_perdas: ganhosPerdas_(ds, period, reasons),
         conversao_ciclo: conversaoCiclo_(ds, period),
         conversao_origem: conversaoOrigem_(ds, period, origins),
+        vendas_detalhe: vendasDetalhe_(ds, period, users, origins),
         ranking_metas: rankingMetas_(ds, period, users, metas, pid),
         metricas: (String(pid) === '100776')
           ? metricasPreVendasAgg_(PREVENDAS_PIPES, deals, stagesArr, hist, acts, period, users, metas)
@@ -180,6 +181,25 @@ function conversaoOrigem_(deals, period, origins) {
   });
   rows.sort(function (a, b) { return b.total - a.total; });
   return rows;
+}
+
+/* ---------- Bloco 3c: Deals fechados (ganhos) no periodo ---------- */
+function vendasDetalhe_(deals, period, users, origins) {
+  var ganhas = deals.filter(function (d) {
+    return Number(d.status) === 1 && inPeriod_(d.closed_at, period);
+  });
+  return ganhas.map(function (d) {
+    var u = users[String(d.owner_id)] || {};
+    var oid = (d.origin_id === '' || d.origin_id == null) ? null : String(d.origin_id);
+    var origem = oid ? ((origins[oid] || {}).origin_name || ('Origem ' + oid)) : 'Sem origem';
+    return {
+      cliente: d.title || ('Deal ' + d.id),
+      vendedor: u.user_name || '',
+      valor: round2_(num_(d.value) / VALUE_DIVISOR),
+      fechado_em: d.closed_at || '',
+      origem: origem
+    };
+  }).sort(function (a, b) { return String(b.fechado_em).localeCompare(String(a.fechado_em)); });
 }
 
 /* ---------- Bloco 4: Ranking + metas (por vendedor) ---------- */
