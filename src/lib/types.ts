@@ -74,6 +74,14 @@ export interface VendedorPct {
   pct: number;
 }
 
+export interface VendaDetalhe {
+  cliente: string;
+  vendedor: string;
+  valor: number;
+  fechado_em: string;
+  origem: string;
+}
+
 export interface PontoSerie {
   dia: string; // YYYY-MM-DD
   leads_abertos: number;
@@ -129,6 +137,8 @@ export interface Funil {
   conversao_ciclo: ConversaoCiclo;
   /** Conversão por origem do lead (opcional: só após republicar o Apps Script). */
   conversao_origem?: OrigemConversao[];
+  /** Deals ganhos no período (opcional: só após republicar o Apps Script). */
+  vendas_detalhe?: VendaDetalhe[];
   ranking_metas: { vendedores: VendedorMeta[] };
   metricas: Metricas;
 }

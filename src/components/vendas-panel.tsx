@@ -8,7 +8,7 @@ import { PaceSub } from "./pace-sub";
 import { FunnelBars } from "./funnel-bars";
 import { MotivosBars } from "./motivos-bars";
 import { ConversaoOrigemCard } from "./conversao-origem-card";
-import { ReunioesTable } from "./reunioes-table";
+import { VendasTable } from "./vendas-table";
 
 function ciclo(dias: number): string {
   if (!dias) return "—";
@@ -206,8 +206,8 @@ export function VendasPanel({
         </Card>
       </section>
 
-      {/* Reuniões do mês */}
-      <ReunioesTable reunioes={m.reunioes_detalhe} vendedorLabel="Closer" />
+      {/* Deals fechados (ganhos) no período */}
+      <VendasTable vendas={funil.vendas_detalhe ?? []} />
     </div>
   );
 }

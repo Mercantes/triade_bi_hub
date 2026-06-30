@@ -5,12 +5,14 @@ import { BI_ENDPOINT } from "@/lib/config";
  * Proxy server-side para o endpoint do Apps Script.
  * Evita problemas de CORS no cliente e centraliza o tratamento de erro.
  *
- * Os dados só mudam 1x/dia (sync das 6h), então cacheamos o resultado para
- * não recomputar o Apps Script (~15s) a cada visita:
- *  - Data Cache do Vercel (fetch `revalidate`) reaproveita a resposta entre invocações.
- *  - `stale-while-revalidate` na CDN serve o cache na hora e revalida em segundo plano,
- *    então só a primeiríssima carga (cache frio) espera.
+ * Os dados só mudam 1x/dia (sync das 6h), então cacheamos na CDN do Vercel via
+ * `s-maxage` + `stale-while-revalidate`: a CDN serve o resultado na hora e revalida
+ * em segundo plano, então só a primeiríssima carga (cache frio) espera os ~15s.
  *  - `?nocache=1` ignora o cache (usado após salvar metas, para refletir na hora).
+ *
+ * O fetch ao Apps Script usa `no-store` (não o Data Cache do Next): o endpoint
+ * responde via redirect 302→googleusercontent, e o Data Cache + redirect falha no
+ * `next dev`. O cache que importa é o da CDN, controlado pelo header abaixo.
  *
  * Query params aceitos: from, to (YYYY-MM-DD), nocache.
  */
@@ -29,9 +31,7 @@ export async function GET(request: Request) {
   try {
     const res = await fetch(url.toString(), {
       redirect: "follow",
-      ...(nocache
-        ? { cache: "no-store" as const }
-        : { next: { revalidate: REVALIDATE } }),
+      cache: "no-store",
     });
 
     if (!res.ok) {
