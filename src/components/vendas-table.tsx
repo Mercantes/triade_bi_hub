@@ -21,8 +21,7 @@ export function VendasTable({ vendas }: { vendas: VendaDetalhe[] }) {
           <thead>
             <tr className="text-left text-[10px] uppercase tracking-wider text-[#8a8a93]">
               <th className="pb-2 font-medium">Cliente</th>
-              <th className="pb-2 font-medium">Closer</th>
-              <th className="pb-2 font-medium">Origem</th>
+              <th className="pb-2 font-medium">Vendedora</th>
               <th className="pb-2 pr-4 text-right font-medium">Valor</th>
               <th className="pb-2 pl-2 font-medium">Fechado em</th>
             </tr>
@@ -34,7 +33,6 @@ export function VendasTable({ vendas }: { vendas: VendaDetalhe[] }) {
                   {v.cliente}
                 </td>
                 <td className="py-2 pr-4">{v.vendedor}</td>
-                <td className="py-2 pr-4 text-[#8a8a93]">{v.origem}</td>
                 <td className="whitespace-nowrap py-2 pr-4 text-right font-semibold tabular-nums text-[#22c55e]">
                   {brl(v.valor)}
                 </td>
@@ -45,7 +43,7 @@ export function VendasTable({ vendas }: { vendas: VendaDetalhe[] }) {
             ))}
             {vendas.length === 0 && (
               <tr>
-                <td colSpan={5} className="py-8 text-center text-[#8a8a93]">
+                <td colSpan={4} className="py-8 text-center text-[#8a8a93]">
                   Nenhum deal fechado neste período.
                 </td>
               </tr>
