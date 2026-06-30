@@ -41,6 +41,12 @@ function doGet(e) {
     var hist = readSheet_('stage_history');
     var acts = readSheet_('activities');
 
+    // Stages de "reuniao agendada/marcada" (qualquer pipeline) — para achar a pre-vendedora dos deals.
+    var reuniaoStageIds = stagesArr.filter(function (s) {
+      var n = norm_(s.stage_name);
+      return n.indexOf('reuni') >= 0 && (n.indexOf('agenda') >= 0 || n.indexOf('marc') >= 0);
+    }).map(function (s) { return String(s.stage_id); });
+
     var byPipe = {};
     deals.forEach(function (d) {
       var k = String(d.pipeline_id);
@@ -57,7 +63,7 @@ function doGet(e) {
         ganhos_perdas: ganhosPerdas_(ds, period, reasons),
         conversao_ciclo: conversaoCiclo_(ds, period),
         conversao_origem: conversaoOrigem_(ds, period, origins),
-        vendas_detalhe: vendasDetalhe_(ds, period, users, origins),
+        vendas_detalhe: vendasDetalhe_(ds, period, users, origins, hist, reuniaoStageIds),
         ranking_metas: rankingMetas_(ds, period, users, metas, pid),
         metricas: (String(pid) === '100776')
           ? metricasPreVendasAgg_(PREVENDAS_PIPES, deals, stagesArr, hist, acts, period, users, metas)
@@ -184,7 +190,20 @@ function conversaoOrigem_(deals, period, origins) {
 }
 
 /* ---------- Bloco 3c: Deals fechados (ganhos) no periodo ---------- */
-function vendasDetalhe_(deals, period, users, origins) {
+// pre_vendedora = quem moveu o deal para "Reuniao Agendada/Marcada" (1o registro no historico).
+function vendasDetalhe_(deals, period, users, origins, hist, reuniaoStageIds) {
+  // mapa deal_id -> usuario que marcou a reuniao (o registro mais antigo)
+  var preByDeal = {}, preDate = {};
+  (hist || []).forEach(function (h) {
+    if (reuniaoStageIds.indexOf(String(h.in_stage_id)) < 0) return;
+    var did = String(h.deal_id);
+    var dt = parseDate_(h.in_date);
+    if (preByDeal[did] === undefined || (dt && preDate[did] && dt < preDate[did])) {
+      preByDeal[did] = String(h.in_user_id);
+      preDate[did] = dt;
+    }
+  });
+
   var ganhas = deals.filter(function (d) {
     return Number(d.status) === 1 && inPeriod_(d.closed_at, period);
   });
@@ -192,8 +211,11 @@ function vendasDetalhe_(deals, period, users, origins) {
     var u = users[String(d.owner_id)] || {};
     var oid = (d.origin_id === '' || d.origin_id == null) ? null : String(d.origin_id);
     var origem = oid ? ((origins[oid] || {}).origin_name || ('Origem ' + oid)) : 'Sem origem';
+    var preId = preByDeal[String(d.id)];
+    var pre = preId ? ((users[preId] || {}).user_name || ('Usuario ' + preId)) : '';
     return {
       cliente: d.title || ('Deal ' + d.id),
+      pre_vendedora: pre,
       vendedor: u.user_name || '',
       valor: round2_(num_(d.value) / VALUE_DIVISOR),
       fechado_em: d.closed_at || '',

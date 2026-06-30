@@ -77,6 +77,8 @@ export interface VendedorPct {
 export interface VendaDetalhe {
   cliente: string;
   vendedor: string;
+  /** SDR/pré-vendedora que marcou a reunião (opcional: só após republicar o Apps Script). */
+  pre_vendedora?: string;
   valor: number;
   fechado_em: string;
   origem: string;
