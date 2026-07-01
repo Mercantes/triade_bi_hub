@@ -8,6 +8,7 @@ import { PaceSub } from "./pace-sub";
 import { FunnelBars } from "./funnel-bars";
 import { MotivosBars } from "./motivos-bars";
 import { ConversaoOrigemCard } from "./conversao-origem-card";
+import { VendasYoYChart } from "./vendas-yoy-chart";
 import { VendasTable } from "./vendas-table";
 
 function ciclo(dias: number): string {
@@ -205,6 +206,9 @@ export function VendasPanel({
           </table>
         </Card>
       </section>
+
+      {/* Comparativo ano a ano (mês a mês) */}
+      <VendasYoYChart dados={funil.vendas_mensais ?? []} />
 
       {/* Deals fechados (ganhos) no período */}
       <VendasTable vendas={funil.vendas_detalhe ?? []} />

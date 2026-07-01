@@ -64,6 +64,7 @@ function doGet(e) {
         conversao_ciclo: conversaoCiclo_(ds, period),
         conversao_origem: conversaoOrigem_(ds, period, origins),
         vendas_detalhe: vendasDetalhe_(ds, period, users, origins, hist, reuniaoStageIds),
+        vendas_mensais: vendasMensais_(ds),
         ranking_metas: rankingMetas_(ds, period, users, metas, pid),
         metricas: (String(pid) === '100776')
           ? metricasPreVendasAgg_(PREVENDAS_PIPES, deals, stagesArr, hist, acts, period, users, metas)
@@ -223,6 +224,26 @@ function vendasDetalhe_(deals, period, users, origins, hist, reuniaoStageIds) {
       origem: origem
     };
   }).sort(function (a, b) { return String(b.fechado_em).localeCompare(String(a.fechado_em)); });
+}
+
+/* ---------- Bloco 3d: Vendas por mes (para comparativo ano a ano) ---------- */
+// Agrupa deals ganhos (status 1) por ano-mes do fechamento. Usa TODOS os deals do
+// funil (nao filtra periodo), pois o grafico compara os ultimos ~24 meses.
+function vendasMensais_(deals) {
+  var by = {};
+  deals.forEach(function (d) {
+    if (Number(d.status) !== 1) return;
+    var dt = parseDate_(d.closed_at);
+    if (!dt) return;
+    var ano = dt.getFullYear(), mes = dt.getMonth() + 1;
+    var k = ano + '-' + mes;
+    if (!by[k]) by[k] = { ano: ano, mes: mes, faturamento: 0, vendas: 0 };
+    by[k].faturamento += num_(d.value) / VALUE_DIVISOR;
+    by[k].vendas += 1;
+  });
+  return Object.keys(by).map(function (k) {
+    var o = by[k]; o.faturamento = round2_(o.faturamento); return o;
+  }).sort(function (a, b) { return a.ano - b.ano || a.mes - b.mes; });
 }
 
 /* ---------- Bloco 4: Ranking + metas (por vendedor) ---------- */

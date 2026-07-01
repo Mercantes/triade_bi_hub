@@ -74,6 +74,13 @@ export interface VendedorPct {
   pct: number;
 }
 
+export interface VendaMensal {
+  ano: number;
+  mes: number; // 1-12
+  faturamento: number;
+  vendas: number;
+}
+
 export interface VendaDetalhe {
   cliente: string;
   vendedor: string;
@@ -141,6 +148,8 @@ export interface Funil {
   conversao_origem?: OrigemConversao[];
   /** Deals ganhos no período (opcional: só após republicar o Apps Script). */
   vendas_detalhe?: VendaDetalhe[];
+  /** Vendas por mês nos últimos ~24 meses (opcional: só após republicar o Apps Script). */
+  vendas_mensais?: VendaMensal[];
   ranking_metas: { vendedores: VendedorMeta[] };
   metricas: Metricas;
 }
