@@ -308,15 +308,25 @@ function rankingMetas_(deals, period, users, metas, pipelineId) {
  *   realizadas = reuniao concluida (status 2) com delivery_date no periodo
  *   no_show    = reuniao aberta (status 0) agendada no periodo cuja data ja passou
  */
-function reuniaoMetrics_(reunioes, period, pidSet, users, dealIdx) {
+function reuniaoMetrics_(reunioes, period, pidSet, users, dealIdx, hist, noShowStageIds) {
   var esc = reunioes.filter(function (r) { return pidSet[String(r.pipeline_id)]; });
-  var hoje = new Date(); hoje = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
-
-  function passou(r) { var d = parseDate_(r.start_at); return d && new Date(d.getFullYear(), d.getMonth(), d.getDate()) < hoje; }
 
   var marc = esc.filter(function (r) { return inPeriod_(r.start_at, period); });
   var real = esc.filter(function (r) { return Number(r.status) === 2 && inPeriod_(r.delivery_date, period); });
-  var nsh = esc.filter(function (r) { return Number(r.status) === 0 && inPeriod_(r.start_at, period) && passou(r); });
+
+  // No-Show pela ETAPA "No Show" do funil (stage_history), scopado por pipeline.
+  var nsDeals = {}, nsByOwner = {};
+  (hist || []).forEach(function (h) {
+    if (!pidSet[String(h.pipeline_id)]) return;
+    if (noShowStageIds.indexOf(String(h.in_stage_id)) < 0) return;
+    if (!inPeriod_(h.in_date, period)) return;
+    var did = String(h.deal_id);
+    if (nsDeals[did]) return;
+    nsDeals[did] = true;
+    var o = String(h.in_user_id);
+    nsByOwner[o] = (nsByOwner[o] || 0) + 1;
+  });
+  var noShow = Object.keys(nsDeals).length;
 
   function porOwner(arr) {
     var by = {}; arr.forEach(function (r) { var o = String(r.owner_id); by[o] = (by[o] || 0) + 1; });
@@ -326,11 +336,13 @@ function reuniaoMetrics_(reunioes, period, pidSet, users, dealIdx) {
     }).sort(function (a, b) { return b.qtd - a.qtd; });
   }
   var marcPV = porOwner(marc), realPV = porOwner(real);
-  var mapM = {}; marcPV.forEach(function (x) { mapM[x.owner_id] = x.qtd; });
   var mapR = {}; realPV.forEach(function (x) { mapR[x.owner_id] = x.qtd; });
-  var compPV = Object.keys(mapM).map(function (oid) {
-    var mc = mapM[oid], rl = mapR[oid] || 0; var u = users[oid] || {};
-    return { owner_id: Number(oid), vendedor: u.user_name || ('Usuario ' + oid), pct: mc ? round2_(Math.min(rl / mc, 1) * 100) : null };
+
+  // Comparecimento por vendedor = realizadas / (realizadas + no-show)
+  var owners = {}; realPV.forEach(function (x) { owners[x.owner_id] = true; }); Object.keys(nsByOwner).forEach(function (o) { owners[o] = true; });
+  var compPV = Object.keys(owners).map(function (oid) {
+    var rl = mapR[oid] || 0, ns = nsByOwner[oid] || 0, tot = rl + ns; var u = users[oid] || {};
+    return { owner_id: Number(oid), vendedor: u.user_name || ('Usuario ' + oid), pct: tot ? round2_((rl / tot) * 100) : null };
   }).sort(function (a, b) { return (b.pct || 0) - (a.pct || 0); });
 
   // detalhe: uniao (marcadas + realizadas do periodo), 1 linha por atividade
@@ -342,21 +354,21 @@ function reuniaoMetrics_(reunioes, period, pidSet, users, dealIdx) {
     var d = dealIdx[String(r.deal_id)] || {};
     var u = users[String(r.owner_id)] || {};
     var realizada = Number(r.status) === 2 && inPeriod_(r.delivery_date, period);
-    var status = realizada ? 'Realizada' : (Number(r.status) === 0 && passou(r) ? 'No-Show' : 'Agendada');
     return {
       cliente: d.title || ('Deal ' + r.deal_id),
       vendedor: u.user_name || '',
       marcada_em: r.start_at || '',
       realizada_em: realizada ? (r.delivery_date || '') : '',
-      status: status
+      status: realizada ? 'Realizada' : 'Agendada'
     };
   }).sort(function (a, b) { return String(b.realizada_em || b.marcada_em).localeCompare(String(a.realizada_em || a.marcada_em)); });
 
+  var totComp = real.length + noShow;
   return {
     marcadas: marc.length,
     realizadas: real.length,
-    no_show: nsh.length,
-    taxa_comparecimento: marc.length ? round2_(Math.min(real.length / marc.length, 1) * 100) : null,
+    no_show: noShow,
+    taxa_comparecimento: totComp ? round2_((real.length / totComp) * 100) : null,
     marcadas_por_vendedor: marcPV,
     realizadas_por_vendedor: realPV,
     comparecimento_por_vendedor: compPV,
@@ -370,10 +382,13 @@ function reuniaoMetrics_(reunioes, period, pidSet, users, dealIdx) {
 function metricasFunnel_(pipelineId, deals, stagesPipe, hist, acts, period, users, metas, reunioes, dealIdx) {
   var entradaIds = stagesPipe.filter(function (s) { return norm_(s.stage_name) === 'entrada'; })
     .map(function (s) { return String(s.stage_id); });
+  var noShowStageIds = stagesPipe.filter(function (s) {
+    var n = norm_(s.stage_name); return n.indexOf('no show') >= 0 || n.indexOf('noshow') >= 0;
+  }).map(function (s) { return String(s.stage_id); });
 
-  // Reunioes por ATIVIDADE (tipo Reuniao de Vendas), scopadas neste pipeline.
+  // Reunioes por ATIVIDADE (tipo Reuniao de Vendas), scopadas neste pipeline. No-show pela etapa.
   var pidSet = {}; pidSet[String(pipelineId)] = true;
-  var rm = reuniaoMetrics_(reunioes, period, pidSet, users, dealIdx);
+  var rm = reuniaoMetrics_(reunioes, period, pidSet, users, dealIdx, hist, noShowStageIds);
 
   var leadsDoPeriodo = deals.filter(function (d) { return inPeriod_(d.created_at, period); });
   var leadsAbertos = leadsDoPeriodo.length;
@@ -434,15 +449,18 @@ function metricasFunnel_(pipelineId, deals, stagesPipe, hist, acts, period, user
 function metricasPreVendasAgg_(targetPids, allDeals, stagesArr, hist, acts, period, users, metas, reunioes, dealIdx) {
   var pidSet = {}; targetPids.forEach(function (p) { pidSet[String(p)] = true; });
 
-  var entradaIds = [];
+  var entradaIds = [], noShowStageIds = [];
   stagesArr.forEach(function (s) {
-    if (pidSet[String(s.pipeline_id)] && norm_(s.stage_name) === 'entrada') entradaIds.push(String(s.stage_id));
+    if (!pidSet[String(s.pipeline_id)]) return;
+    var n = norm_(s.stage_name);
+    if (n === 'entrada') entradaIds.push(String(s.stage_id));
+    if (n.indexOf('no show') >= 0 || n.indexOf('noshow') >= 0) noShowStageIds.push(String(s.stage_id));
   });
 
   var deals = allDeals.filter(function (d) { return pidSet[String(d.pipeline_id)]; });
 
-  // Reunioes por ATIVIDADE (tipo Reuniao de Vendas), scopadas nos pipelines-alvo.
-  var rm = reuniaoMetrics_(reunioes, period, pidSet, users, dealIdx);
+  // Reunioes por ATIVIDADE (tipo Reuniao de Vendas), scopadas nos pipelines-alvo. No-show pela etapa.
+  var rm = reuniaoMetrics_(reunioes, period, pidSet, users, dealIdx, hist, noShowStageIds);
 
   var leadsDoPeriodo = deals.filter(function (d) { return inPeriod_(d.created_at, period); });
   var leadsFila = deals.filter(function (d) { return Number(d.status) === 0 && !truthy_(d.freezed) && entradaIds.indexOf(String(d.stage_id)) >= 0; });
