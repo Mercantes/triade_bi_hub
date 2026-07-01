@@ -527,7 +527,14 @@ function listaReunioes_(histPipe, reuniaoIds, realizadaIds, noShowIds, deals, us
     if (realizadaIds.indexOf(String(h.in_stage_id)) >= 0 && !realizadaEm[did]) realizadaEm[did] = dt;
     if (noShowIds.indexOf(String(h.in_stage_id)) >= 0 && !noShowEm[did]) noShowEm[did] = dt;
   });
-  return Object.keys(marcadaEm).map(function (did) {
+  // Uniao de deals com QUALQUER evento no periodo (marcada, realizada ou no-show),
+  // para os totais por status baterem com os KPIs do topo (ex.: realizadas do mes
+  // incluem reunioes marcadas em meses anteriores mas realizadas neste periodo).
+  var allIds = {};
+  Object.keys(marcadaEm).forEach(function (k) { allIds[k] = true; });
+  Object.keys(realizadaEm).forEach(function (k) { allIds[k] = true; });
+  Object.keys(noShowEm).forEach(function (k) { allIds[k] = true; });
+  return Object.keys(allIds).map(function (did) {
     var d = dealIdx[did] || {};
     var u = users[String(d.owner_id)] || {};
     var status = realizadaEm[did] ? 'Realizada' : (noShowEm[did] ? 'No-Show' : 'Agendada');
@@ -538,7 +545,9 @@ function listaReunioes_(histPipe, reuniaoIds, realizadaIds, noShowIds, deals, us
       realizada_em: realizadaEm[did] || '',
       status: status
     };
-  }).sort(function (a, b) { return String(b.marcada_em).localeCompare(String(a.marcada_em)); });
+  }).sort(function (a, b) {
+    return String(b.realizada_em || b.marcada_em).localeCompare(String(a.realizada_em || a.marcada_em));
+  });
 }
 
 function diaStr_(v) { var d = parseDate_(v); return d ? fmt_(d) : null; }
