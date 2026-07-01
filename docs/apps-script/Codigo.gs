@@ -93,8 +93,9 @@ function doGet(e) {
 }
 
 /* ---------- Bloco 1: Pipeline por etapa (valor em aberto) ---------- */
+// Considera só deals ATIVOS: status 0 (aberto) e nao congelados (freezed).
 function pipelinePorEtapa_(deals, stages) {
-  var abertas = deals.filter(function (d) { return Number(d.status) === 0; });
+  var abertas = deals.filter(function (d) { return Number(d.status) === 0 && !truthy_(d.freezed); });
   var byStage = {};
   abertas.forEach(function (d) {
     var k = d.stage_id;
@@ -331,7 +332,7 @@ function metricasFunnel_(pipelineId, deals, stagesPipe, hist, acts, period, user
   var leadsDoPeriodo = deals.filter(function (d) { return inPeriod_(d.created_at, period); });
   var leadsAbertos = leadsDoPeriodo.length;
   var leadsFila = deals.filter(function (d) {
-    return Number(d.status) === 0 && entradaIds.indexOf(String(d.stage_id)) >= 0;
+    return Number(d.status) === 0 && !truthy_(d.freezed) && entradaIds.indexOf(String(d.stage_id)) >= 0;
   });
   var leadsParaAbrir = leadsFila.length;
 
@@ -434,7 +435,7 @@ function metricasPreVendasAgg_(targetPids, allDeals, stagesArr, hist, acts, peri
   var realizadasPorVend = porVendedor(realizadaIds);
 
   var leadsDoPeriodo = deals.filter(function (d) { return inPeriod_(d.created_at, period); });
-  var leadsFila = deals.filter(function (d) { return Number(d.status) === 0 && entradaIds.indexOf(String(d.stage_id)) >= 0; });
+  var leadsFila = deals.filter(function (d) { return Number(d.status) === 0 && !truthy_(d.freezed) && entradaIds.indexOf(String(d.stage_id)) >= 0; });
   var leadsAbertosPorVend = agrupaPorOwner_(leadsDoPeriodo, users);
   var leadsParaAbrirPorVend = agrupaPorOwner_(leadsFila, users);
 
