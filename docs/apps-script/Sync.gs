@@ -186,6 +186,41 @@ function syncActivitiesDone() {
   Logger.log('Atividades realizadas: ' + rows.length + ' linhas (ultimos ' + CUTOFF_ATIV_MONTHS + ' meses)' + (r.complete ? ' — COMPLETO.' : ' (PARCIAL).'));
 }
 
+/* ====================== Sync de REUNIOES (atividade tipo "Reuniao de Vendas") ====================== */
+// Tipo 126514 = "Reuniao de Vendas". Guarda abertas (agendadas) e concluidas, com data
+// agendada (start_at) e de conclusao (delivery_date), para o funil de reunioes ser
+// baseado em ATIVIDADE (igual ao relatorio do PipeRun) e nao em movimento de etapa.
+var REUNIAO_TYPE_ID = '126514';
+
+function syncReunioes() {
+  var dealsRows = readSheetObj_('deals');
+  var dealPipe = {};
+  dealsRows.forEach(function (d) { dealPipe[String(d.id)] = d.pipeline_id; });
+
+  var d = new Date(); d.setMonth(d.getMonth() - 13);
+  var cut = Utilities.formatDate(d, Session.getScriptTimeZone(), 'yyyy-MM-dd');
+
+  var open = fetchAll_('/activities', { status: 0 }).data;
+  var done = fetchAll_('/activities', { status: 2, delivery_date_start: cut }).data;
+  var all = open.concat(done).filter(function (a) { return String(a.activity_type_id) === REUNIAO_TYPE_ID; });
+
+  var headers = ['id', 'deal_id', 'pipeline_id', 'owner_id', 'status', 'start_at', 'delivery_date'];
+  var rows = all.map(function (a) {
+    return [a.id, a.deal_id, dealPipe[String(a.deal_id)] || '', a.owner_id, a.status, a.start_at, a.delivery_date];
+  });
+  replaceSheet_('reunioes', headers, rows);
+
+  // Verificacao: concluidas em junho/2026 por vendedor (comparar com o relatorio da Elaine)
+  var jun = all.filter(function (a) {
+    var s = String(a.delivery_date || '').slice(0, 10);
+    return Number(a.status) === 2 && s >= '2026-06-01' && s <= '2026-06-30';
+  });
+  var byOwner = {};
+  jun.forEach(function (a) { var o = String(a.owner_id); byOwner[o] = (byOwner[o] || 0) + 1; });
+  Logger.log('Reunioes: ' + rows.length + ' linhas | concluidas junho: ' + jun.length);
+  Logger.log('  por owner (junho): ' + JSON.stringify(byOwner));
+}
+
 /* ====================== Sync de DEALS (page, 24 meses, upsert) ====================== */
 function syncDeals() {
   var pipelines = getPipelines_();
@@ -333,6 +368,7 @@ function setup() {
   sheetOrCreate_('stage_history', ['id','deal_id','pipeline_id','in_stage_id','out_stage_id','in_user_id','out_user_id','in_date','out_date']);
   sheetOrCreate_('activities', ['id','deal_id','pipeline_id','owner_id','status','delivery_date','start_at','end_at','created_at']);
   sheetOrCreate_('activities_done', ['id','deal_id','owner_id','delivery_date']);
+  sheetOrCreate_('reunioes', ['id','deal_id','pipeline_id','owner_id','status','start_at','delivery_date']);
   var c = sheetOrCreate_('_control', null);
   c.getRange('A1').setValue('last_sync');
   Logger.log('Abas criadas/conferidas.');
@@ -364,7 +400,8 @@ function syncDiarioB() {
   syncStageHistory();
   syncActivities();
   syncActivitiesDone();
-  Logger.log('Sync diario B concluido (stage_history + activities + activities_done).');
+  syncReunioes();
+  Logger.log('Sync diario B concluido (stage_history + activities + activities_done + reunioes).');
 }
 
 /* ====================== RESET (recomeca a carga do zero) ====================== */
