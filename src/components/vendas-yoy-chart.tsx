@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import {
   CartesianGrid,
+  LabelList,
   Legend,
   Line,
   LineChart,
@@ -45,6 +46,16 @@ export function VendasYoYChart({ dados }: { dados: VendaMensal[] }) {
   }, [dados, metrica]);
 
   const fmt = (v: number) => (metrica === "faturamento" ? brl(v) : num(v));
+
+  // Rótulo compacto nos pontos: pula zero; faturamento vira "R$ 12,5k".
+  const labelFmt = (v: ReactNode): string => {
+    const n = Number(v);
+    if (!n) return "";
+    if (metrica === "vendas") return String(n);
+    return n >= 1000
+      ? `R$ ${(n / 1000).toLocaleString("pt-BR", { maximumFractionDigits: 1 })}k`
+      : `R$ ${Math.round(n)}`;
+  };
 
   return (
     <Card className="p-5">
@@ -116,7 +127,15 @@ export function VendasYoYChart({ dados }: { dados: VendaMensal[] }) {
                   dot={{ r: 2, fill: corPorAno[ano], strokeWidth: 0 }}
                   activeDot={{ r: 4 }}
                   connectNulls
-                />
+                >
+                  <LabelList
+                    dataKey={String(ano)}
+                    position="top"
+                    offset={8}
+                    formatter={labelFmt}
+                    style={{ fontSize: 9, fill: corPorAno[ano], fontWeight: 600 }}
+                  />
+                </Line>
               ))}
             </LineChart>
           </ResponsiveContainer>
