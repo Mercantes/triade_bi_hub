@@ -67,38 +67,52 @@ export function computePace(
 
 export interface SeriePonto {
   dia: string;
-  real: number;
+  real: number | null;
   pace: number;
 }
 
 /**
  * Monta os dados do gráfico: linha cheia (acumulado real) + linha de pace
  * (meta linear distribuída pelos dias úteis do mês).
+ *
+ * No mês corrente, estende o eixo até o último dia do mês: a linha `real` fica
+ * `null` após hoje (o verde cresce dia a dia, sem preencher o mês todo) e a
+ * linha de meta (`pace`) continua até o fim do mês.
  */
 export function buildChartSeries(
   serie: PontoSerie[],
   key: SerieKey,
   meta: number,
   fromISO: string,
+  now = new Date(),
 ): SeriePonto[] {
   const from = parseISO(fromISO);
   const monthStart = new Date(from.getFullYear(), from.getMonth(), 1);
   const monthEnd = new Date(from.getFullYear(), from.getMonth() + 1, 0);
   const totais = businessDays(monthStart, monthEnd);
   const passoPorDiaUtil = totais > 0 ? meta / totais : 0;
+  const paceDe = (dia: Date) =>
+    Math.round(passoPorDiaUtil * (dia < monthStart ? 0 : businessDays(monthStart, dia < monthEnd ? dia : monthEnd)));
 
-  return serie.map((p) => {
-    const dia = parseISO(p.dia);
-    const decorridos =
-      dia < monthStart
-        ? 0
-        : businessDays(monthStart, dia < monthEnd ? dia : monthEnd);
-    return {
-      dia: p.dia,
-      real: p[key],
-      pace: Math.round(passoPorDiaUtil * decorridos),
-    };
-  });
+  const pts: SeriePonto[] = serie.map((p) => ({
+    dia: p.dia,
+    real: p[key],
+    pace: paceDe(parseISO(p.dia)),
+  }));
+
+  // Mes corrente e ainda nao terminou -> completa os dias futuros (real = null, pace segue).
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const ehMesCorrente =
+    monthEnd.getFullYear() === today.getFullYear() && monthEnd.getMonth() === today.getMonth();
+  if (ehMesCorrente && pts.length) {
+    const cursor = parseISO(pts[pts.length - 1].dia);
+    cursor.setDate(cursor.getDate() + 1);
+    while (cursor <= monthEnd) {
+      pts.push({ dia: toISODate(cursor), real: null, pace: paceDe(cursor) });
+      cursor.setDate(cursor.getDate() + 1);
+    }
+  }
+  return pts;
 }
 
 /** Atalho: data de hoje em ISO (para limites). */
