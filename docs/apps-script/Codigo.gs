@@ -308,25 +308,15 @@ function rankingMetas_(deals, period, users, metas, pipelineId) {
  *   realizadas = reuniao concluida (status 2) com delivery_date no periodo
  *   no_show    = reuniao aberta (status 0) agendada no periodo cuja data ja passou
  */
-function reuniaoMetrics_(reunioes, period, pidSet, users, dealIdx, hist, noShowStageIds) {
+function reuniaoMetrics_(reunioes, period, pidSet, users, dealIdx) {
   var esc = reunioes.filter(function (r) { return pidSet[String(r.pipeline_id)]; });
 
-  var marc = esc.filter(function (r) { return inPeriod_(r.start_at, period); });
+  // marcadas = reuniao CRIADA no periodo (marcada no mes), qualquer status.
+  var marc = esc.filter(function (r) { return inPeriod_(r.created_at, period); });
+  // realizadas = concluida (status 2) com delivery_date no periodo (bate com PipeRun).
   var real = esc.filter(function (r) { return Number(r.status) === 2 && inPeriod_(r.delivery_date, period); });
-
-  // No-Show pela ETAPA "No Show" do funil (stage_history), scopado por pipeline.
-  var nsDeals = {}, nsByOwner = {};
-  (hist || []).forEach(function (h) {
-    if (!pidSet[String(h.pipeline_id)]) return;
-    if (noShowStageIds.indexOf(String(h.in_stage_id)) < 0) return;
-    if (!inPeriod_(h.in_date, period)) return;
-    var did = String(h.deal_id);
-    if (nsDeals[did]) return;
-    nsDeals[did] = true;
-    var o = String(h.in_user_id);
-    nsByOwner[o] = (nsByOwner[o] || 0) + 1;
-  });
-  var noShow = Object.keys(nsDeals).length;
+  // no-show = atividade status 4 criada no periodo.
+  var nsh = esc.filter(function (r) { return Number(r.status) === 4 && inPeriod_(r.created_at, period); });
 
   function porOwner(arr) {
     var by = {}; arr.forEach(function (r) { var o = String(r.owner_id); by[o] = (by[o] || 0) + 1; });
@@ -337,6 +327,7 @@ function reuniaoMetrics_(reunioes, period, pidSet, users, dealIdx, hist, noShowS
   }
   var marcPV = porOwner(marc), realPV = porOwner(real);
   var mapR = {}; realPV.forEach(function (x) { mapR[x.owner_id] = x.qtd; });
+  var nsByOwner = {}; nsh.forEach(function (r) { var o = String(r.owner_id); nsByOwner[o] = (nsByOwner[o] || 0) + 1; });
 
   // Comparecimento por vendedor = realizadas / (realizadas + no-show)
   var owners = {}; realPV.forEach(function (x) { owners[x.owner_id] = true; }); Object.keys(nsByOwner).forEach(function (o) { owners[o] = true; });
@@ -354,15 +345,17 @@ function reuniaoMetrics_(reunioes, period, pidSet, users, dealIdx, hist, noShowS
     var d = dealIdx[String(r.deal_id)] || {};
     var u = users[String(r.owner_id)] || {};
     var realizada = Number(r.status) === 2 && inPeriod_(r.delivery_date, period);
+    var status = realizada ? 'Realizada' : (Number(r.status) === 4 ? 'No-Show' : 'Agendada');
     return {
       cliente: d.title || ('Deal ' + r.deal_id),
       vendedor: u.user_name || '',
-      marcada_em: r.start_at || '',
+      marcada_em: r.start_at || r.created_at || '',
       realizada_em: realizada ? (r.delivery_date || '') : '',
-      status: realizada ? 'Realizada' : 'Agendada'
+      status: status
     };
   }).sort(function (a, b) { return String(b.realizada_em || b.marcada_em).localeCompare(String(a.realizada_em || a.marcada_em)); });
 
+  var noShow = nsh.length;
   var totComp = real.length + noShow;
   return {
     marcadas: marc.length,
@@ -382,13 +375,10 @@ function reuniaoMetrics_(reunioes, period, pidSet, users, dealIdx, hist, noShowS
 function metricasFunnel_(pipelineId, deals, stagesPipe, hist, acts, period, users, metas, reunioes, dealIdx) {
   var entradaIds = stagesPipe.filter(function (s) { return norm_(s.stage_name) === 'entrada'; })
     .map(function (s) { return String(s.stage_id); });
-  var noShowStageIds = stagesPipe.filter(function (s) {
-    var n = norm_(s.stage_name); return n.indexOf('no show') >= 0 || n.indexOf('noshow') >= 0;
-  }).map(function (s) { return String(s.stage_id); });
 
-  // Reunioes por ATIVIDADE (tipo Reuniao de Vendas), scopadas neste pipeline. No-show pela etapa.
+  // Reunioes 100% por ATIVIDADE (tipo Reuniao de Vendas): marcadas/realizadas/no-show/comparecimento.
   var pidSet = {}; pidSet[String(pipelineId)] = true;
-  var rm = reuniaoMetrics_(reunioes, period, pidSet, users, dealIdx, hist, noShowStageIds);
+  var rm = reuniaoMetrics_(reunioes, period, pidSet, users, dealIdx);
 
   var leadsDoPeriodo = deals.filter(function (d) { return inPeriod_(d.created_at, period); });
   var leadsAbertos = leadsDoPeriodo.length;
@@ -449,18 +439,15 @@ function metricasFunnel_(pipelineId, deals, stagesPipe, hist, acts, period, user
 function metricasPreVendasAgg_(targetPids, allDeals, stagesArr, hist, acts, period, users, metas, reunioes, dealIdx) {
   var pidSet = {}; targetPids.forEach(function (p) { pidSet[String(p)] = true; });
 
-  var entradaIds = [], noShowStageIds = [];
+  var entradaIds = [];
   stagesArr.forEach(function (s) {
-    if (!pidSet[String(s.pipeline_id)]) return;
-    var n = norm_(s.stage_name);
-    if (n === 'entrada') entradaIds.push(String(s.stage_id));
-    if (n.indexOf('no show') >= 0 || n.indexOf('noshow') >= 0) noShowStageIds.push(String(s.stage_id));
+    if (pidSet[String(s.pipeline_id)] && norm_(s.stage_name) === 'entrada') entradaIds.push(String(s.stage_id));
   });
 
   var deals = allDeals.filter(function (d) { return pidSet[String(d.pipeline_id)]; });
 
-  // Reunioes por ATIVIDADE (tipo Reuniao de Vendas), scopadas nos pipelines-alvo. No-show pela etapa.
-  var rm = reuniaoMetrics_(reunioes, period, pidSet, users, dealIdx, hist, noShowStageIds);
+  // Reunioes 100% por ATIVIDADE (tipo Reuniao de Vendas), scopadas nos pipelines-alvo.
+  var rm = reuniaoMetrics_(reunioes, period, pidSet, users, dealIdx);
 
   var leadsDoPeriodo = deals.filter(function (d) { return inPeriod_(d.created_at, period); });
   var leadsFila = deals.filter(function (d) { return Number(d.status) === 0 && !truthy_(d.freezed) && entradaIds.indexOf(String(d.stage_id)) >= 0; });
@@ -521,7 +508,7 @@ function serieDiaria_(leadsDoPeriodo, reunMarc, reunReal, period) {
     porDia[dia][campo] += 1;
   }
   leadsDoPeriodo.forEach(function (d) { bump(diaStr_(d.created_at), 'leads'); });
-  reunMarc.forEach(function (r) { bump(diaStr_(r.start_at), 'marcadas'); });
+  reunMarc.forEach(function (r) { bump(diaStr_(r.created_at), 'marcadas'); });
   reunReal.forEach(function (r) { bump(diaStr_(r.delivery_date), 'realizadas'); });
   var out = [];
   var acc = { leads: 0, marcadas: 0, realizadas: 0 };

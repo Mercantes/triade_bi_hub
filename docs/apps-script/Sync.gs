@@ -200,25 +200,18 @@ function syncReunioes() {
   var d = new Date(); d.setMonth(d.getMonth() - 13);
   var cut = Utilities.formatDate(d, Session.getScriptTimeZone(), 'yyyy-MM-dd');
 
+  // status: 0 = agendada (aberta), 2 = concluida (realizada), 4 = no-show
   var open = fetchAll_('/activities', { status: 0 }).data;
   var done = fetchAll_('/activities', { status: 2, delivery_date_start: cut }).data;
-  var all = open.concat(done).filter(function (a) { return String(a.activity_type_id) === REUNIAO_TYPE_ID; });
+  var nosh = fetchAll_('/activities', { status: 4, created_at_start: cut }).data;
+  var all = open.concat(done).concat(nosh).filter(function (a) { return String(a.activity_type_id) === REUNIAO_TYPE_ID; });
 
-  var headers = ['id', 'deal_id', 'pipeline_id', 'owner_id', 'status', 'start_at', 'delivery_date'];
+  var headers = ['id', 'deal_id', 'pipeline_id', 'owner_id', 'status', 'created_at', 'start_at', 'delivery_date'];
   var rows = all.map(function (a) {
-    return [a.id, a.deal_id, dealPipe[String(a.deal_id)] || '', a.owner_id, a.status, a.start_at, a.delivery_date];
+    return [a.id, a.deal_id, dealPipe[String(a.deal_id)] || '', a.owner_id, a.status, a.created_at, a.start_at, a.delivery_date];
   });
   replaceSheet_('reunioes', headers, rows);
-
-  // Verificacao: concluidas em junho/2026 por vendedor (comparar com o relatorio da Elaine)
-  var jun = all.filter(function (a) {
-    var s = String(a.delivery_date || '').slice(0, 10);
-    return Number(a.status) === 2 && s >= '2026-06-01' && s <= '2026-06-30';
-  });
-  var byOwner = {};
-  jun.forEach(function (a) { var o = String(a.owner_id); byOwner[o] = (byOwner[o] || 0) + 1; });
-  Logger.log('Reunioes: ' + rows.length + ' linhas | concluidas junho: ' + jun.length);
-  Logger.log('  por owner (junho): ' + JSON.stringify(byOwner));
+  Logger.log('Reunioes: ' + rows.length + ' linhas (status 0/2/4, com created_at).');
 }
 
 /* ====================== Sync de DEALS (page, 24 meses, upsert) ====================== */
@@ -368,7 +361,7 @@ function setup() {
   sheetOrCreate_('stage_history', ['id','deal_id','pipeline_id','in_stage_id','out_stage_id','in_user_id','out_user_id','in_date','out_date']);
   sheetOrCreate_('activities', ['id','deal_id','pipeline_id','owner_id','status','delivery_date','start_at','end_at','created_at']);
   sheetOrCreate_('activities_done', ['id','deal_id','owner_id','delivery_date']);
-  sheetOrCreate_('reunioes', ['id','deal_id','pipeline_id','owner_id','status','start_at','delivery_date']);
+  sheetOrCreate_('reunioes', ['id','deal_id','pipeline_id','owner_id','status','created_at','start_at','delivery_date']);
   var c = sheetOrCreate_('_control', null);
   c.getRange('A1').setValue('last_sync');
   Logger.log('Abas criadas/conferidas.');
