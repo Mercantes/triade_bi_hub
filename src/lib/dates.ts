@@ -19,6 +19,14 @@ export function currentMonthRange(): Range {
   return { from: toISODate(first), to: toISODate(now) };
 }
 
+/** Mês passado inteiro (1º ao último dia do mês anterior). */
+export function lastMonthRange(): Range {
+  const now = new Date();
+  const first = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const last = new Date(now.getFullYear(), now.getMonth(), 0); // dia 0 = último dia do mês anterior
+  return { from: toISODate(first), to: toISODate(last) };
+}
+
 /** Últimos N meses até hoje. */
 export function lastMonthsRange(months: number): Range {
   const now = new Date();
@@ -28,6 +36,7 @@ export function lastMonthsRange(months: number): Range {
 
 export const SHORTCUTS: { label: string; range: () => Range }[] = [
   { label: "Mês atual", range: currentMonthRange },
+  { label: "Mês passado", range: lastMonthRange },
   { label: "Últimos 3 meses", range: () => lastMonthsRange(3) },
   { label: "Últimos 12 meses", range: () => lastMonthsRange(12) },
 ];
