@@ -32,6 +32,10 @@ export function VendasPanel({
   const metas = m.metas;
   // "Reuniões realizadas" considera todas (Pré-Vendas + Vendas), igual à aba Pré-Vendas.
   const rr = reunioesAgg ?? m;
+  // Taxa de Fechamento = Vendas / Reuniões Realizadas.
+  const taxaFechamento = rr.reunioes_realizadas
+    ? (gp.ganhos.qtd / rr.reunioes_realizadas) * 100
+    : null;
 
   return (
     <div className="space-y-6">
@@ -78,7 +82,7 @@ export function VendasPanel({
           }
         />
         <StatCard label="Ticket Médio" value={brlOrDash(cc.ticket_medio)} />
-        <StatCard label="Taxa de Fechamento" value={pct(cc.win_rate)} />
+        <StatCard label="Taxa de Fechamento" value={pct(taxaFechamento)} />
         <StatCard label="Ciclo Médio" value={ciclo(cc.ciclo_medio_dias)} />
         <StatCard
           label="Valor em Aberto"
