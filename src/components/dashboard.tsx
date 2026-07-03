@@ -86,11 +86,17 @@ export function Dashboard() {
 
   const funil: Funil | undefined = data?.funis.find((f) => f.nome === tab);
 
+  // Metas são editadas num único menu (o do funil de Vendas), independente da
+  // aba ativa. O modal de Vendas cobre todas as colunas (Pré-Vendas + Vendas).
+  const funilMetas: Funil | undefined = data?.funis.find(
+    (f) => f.nome === "Vendas",
+  );
+
   // Mês de referência das metas = mês do fim do período (igual ao backend).
   const mesISO = (data?.period.to ?? range.to).substring(0, 7);
   const mesLabel = monthLabel(data?.period.to ?? range.from);
 
-  const snapKey = `${tab}|${mesISO}`;
+  const snapKey = `Vendas|${mesISO}`;
 
   // Pace/meta só fazem sentido em período de 1 mês.
   const mesmoMes = range.from.slice(0, 7) === range.to.slice(0, 7);
@@ -106,8 +112,8 @@ export function Dashboard() {
   // vendedores do funil com suas metas atuais.
   const linhasIniciais: MetaVendedorEdit[] = useMemo(() => {
     if (metasSnapshot[snapKey]) return metasSnapshot[snapKey];
-    if (!funil) return [];
-    return funil.ranking_metas.vendedores.map((v) => ({
+    if (!funilMetas) return [];
+    return funilMetas.ranking_metas.vendedores.map((v) => ({
       owner_id: v.owner_id,
       vendedor: v.vendedor,
       meta_leads: v.meta_leads,
@@ -118,7 +124,7 @@ export function Dashboard() {
       meta_faturamento: v.meta_faturamento,
       meta_taxa_fechamento: v.meta_taxa_fechamento,
     }));
-  }, [funil, metasSnapshot, snapKey]);
+  }, [funilMetas, metasSnapshot, snapKey]);
 
   const abrirEdicao = useCallback(() => {
     setErroMetas(null);
@@ -129,11 +135,11 @@ export function Dashboard() {
   // Grava as metas por vendedor na fonte; guarda snapshot e recarrega o BI.
   const handleSaveMetas = useCallback(
     (rows: MetaVendedorEdit[]) => {
-      if (!funil) return;
+      if (!funilMetas) return;
       setSalvandoMetas(true);
       setErroMetas(null);
       setMetasSalvoOk(false);
-      saveMetasRows(funil.pipeline_id, mesISO, rows)
+      saveMetasRows(funilMetas.pipeline_id, mesISO, rows)
         .then(() => {
           setMetasSnapshot((prev) => ({ ...prev, [snapKey]: rows }));
           setMetasSalvoOk(true); // mantém o modal aberto com "✓ salvo"
@@ -144,7 +150,7 @@ export function Dashboard() {
         )
         .finally(() => setSalvandoMetas(false));
     },
-    [funil, mesISO, range, applyRange, snapKey],
+    [funilMetas, mesISO, range, applyRange, snapKey],
   );
 
   return (
@@ -207,7 +213,7 @@ export function Dashboard() {
             />
             <button
               onClick={abrirEdicao}
-              disabled={!funil}
+              disabled={!funilMetas}
               className="rounded-lg border border-[#2dd4bf]/40 px-3 py-1.5 text-xs font-medium text-[#2dd4bf] transition-colors hover:bg-[#2dd4bf]/10 disabled:cursor-not-allowed disabled:opacity-40"
             >
               Editar metas
@@ -273,6 +279,7 @@ export function Dashboard() {
                   fromISO={range.from}
                   mostrarMetas={mesmoMes}
                   etapasVendas={etapasVendas}
+                  metasVendedores={funilMetas?.ranking_metas.vendedores ?? []}
                 />
               )}
             </div>
@@ -286,10 +293,9 @@ export function Dashboard() {
         )}
       </main>
 
-      {editOpen && funil && (
+      {editOpen && funilMetas && (
         <EditMetasModal
-          key={tab}
-          funilNome={tab}
+          funilNome="Vendas"
           mes={mesLabel}
           linhasIniciais={linhasIniciais}
           usuarios={usuarios}

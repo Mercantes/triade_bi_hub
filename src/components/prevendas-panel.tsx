@@ -1,4 +1,4 @@
-import type { Etapa, Funil } from "@/lib/types";
+import type { Etapa, Funil, VendedorMeta } from "@/lib/types";
 import { num, pct } from "@/lib/format";
 import { attendanceColor, noShowColor } from "@/lib/colors";
 import { computePace, buildChartSeries } from "@/lib/pace";
@@ -21,11 +21,14 @@ export function PreVendasPanel({
   fromISO,
   mostrarMetas,
   etapasVendas,
+  metasVendedores,
 }: {
   funil: Funil;
   fromISO: string;
   mostrarMetas: boolean;
   etapasVendas: Etapa[];
+  /** Metas por vendedor (funil de Vendas — fonte única das metas). */
+  metasVendedores: VendedorMeta[];
 }) {
   const m = funil.metricas;
   const metas = m.metas;
@@ -33,9 +36,8 @@ export function PreVendasPanel({
   const etapasFunil = mergeEtapasPreVenda(funil.pipeline_por_etapa.etapas, etapasVendas);
 
   // Ideal por dia útil (meta do vendedor ÷ dias úteis do mês), por vendedor.
-  const metaByOwner = new Map(
-    funil.ranking_metas.vendedores.map((v) => [v.owner_id, v]),
-  );
+  // Metas vêm do funil de Vendas (menu único de "Editar metas").
+  const metaByOwner = new Map(metasVendedores.map((v) => [v.owner_id, v]));
   const idealDia = (ownerId: number, field: MetaField): number => {
     const meta = metaByOwner.get(ownerId)?.[field] ?? 0;
     return dias.diasUteisTotais > 0 ? Math.round(meta / dias.diasUteisTotais) : 0;
