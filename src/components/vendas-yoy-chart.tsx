@@ -18,7 +18,7 @@ import { Card, SectionTitle } from "./ui";
 
 const MESES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 // Cores da mais recente (verde forte) para as mais antigas (esmaecidas).
-const PALETA = ["#22c55e", "#2dd4bf", "#8a8a93", "#52525b"];
+const PALETA = ["#22c55e", "#2dd4bf", "#6b7280", "#9ca3af"];
 
 type Metrica = "faturamento" | "vendas";
 
@@ -30,7 +30,7 @@ export function VendasYoYChart({ dados }: { dados: VendaMensal[] }) {
     // Cor: ano mais recente recebe a cor mais forte.
     const cor: Record<number, string> = {};
     [...anosSet].reverse().forEach((ano, i) => {
-      cor[ano] = PALETA[i] ?? "#52525b";
+      cor[ano] = PALETA[i] ?? "#9ca3af";
     });
     // Uma linha por mês (Jan..Dez), com uma coluna por ano.
     const rows = MESES.map((mesLabel, i) => {
@@ -74,7 +74,7 @@ export function VendasYoYChart({ dados }: { dados: VendaMensal[] }) {
               className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
                 metrica === val
                   ? "bg-[#e50914] text-white"
-                  : "bg-[#16161a] text-[#8a8a93] hover:text-[#f4f4f5]"
+                  : "bg-[#ffffff] text-[#6b7280] hover:text-[#111827]"
               }`}
             >
               {label}
@@ -84,21 +84,21 @@ export function VendasYoYChart({ dados }: { dados: VendaMensal[] }) {
       </div>
 
       {anos.length === 0 ? (
-        <p className="py-12 text-center text-sm text-[#71717a]">Sem dados.</p>
+        <p className="py-12 text-center text-sm text-[#9ca3af]">Sem dados.</p>
       ) : (
         <div className="h-[280px] min-w-0">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={chartData} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1f1f24" vertical={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
               <XAxis
                 dataKey="mes"
-                stroke="#52525b"
+                stroke="#9ca3af"
                 fontSize={11}
                 tickLine={false}
                 axisLine={false}
               />
               <YAxis
-                stroke="#52525b"
+                stroke="#9ca3af"
                 fontSize={11}
                 tickLine={false}
                 axisLine={false}
@@ -107,15 +107,15 @@ export function VendasYoYChart({ dados }: { dados: VendaMensal[] }) {
               />
               <Tooltip
                 contentStyle={{
-                  background: "#16161a",
-                  border: "1px solid #26262c",
+                  background: "#ffffff",
+                  border: "1px solid #e5e7eb",
                   borderRadius: 8,
-                  color: "#f4f4f5",
+                  color: "#111827",
                   fontSize: 12,
                 }}
                 formatter={(v, n) => [fmt(Number(v)), String(n)]}
               />
-              <Legend wrapperStyle={{ fontSize: 11, color: "#a1a1aa" }} iconType="plainline" />
+              <Legend wrapperStyle={{ fontSize: 11, color: "#4b5563" }} iconType="plainline" />
               {anos.map((ano) => (
                 <Line
                   key={ano}

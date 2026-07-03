@@ -13,7 +13,7 @@ function statusBadge(status: string): string {
     return "bg-[#eab308]/15 text-[#eab308]";
   if (s.includes("no-show") || s.includes("no show"))
     return "bg-[#e50914]/15 text-[#e50914]";
-  return "bg-[#26262c] text-[#d4d4d8]";
+  return "bg-[#e5e7eb] text-[#374151]";
 }
 
 export function ReunioesTable({
@@ -59,7 +59,7 @@ export function ReunioesTable({
               className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
                 filtro === t.value
                   ? "bg-[#e50914] text-white"
-                  : "bg-[#16161a] text-[#8a8a93] hover:text-[#f4f4f5]"
+                  : "bg-[#ffffff] text-[#6b7280] hover:text-[#111827]"
               }`}
             >
               {t.label} <span className="opacity-70">{t.count}</span>
@@ -71,7 +71,7 @@ export function ReunioesTable({
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-left text-[10px] uppercase tracking-wider text-[#8a8a93]">
+            <tr className="text-left text-[10px] uppercase tracking-wider text-[#6b7280]">
               <th className="pb-2 font-medium">Cliente</th>
               <th className="pb-2 font-medium">{vendedorLabel}</th>
               <th className="pb-2 font-medium">Marcada em</th>
@@ -79,17 +79,17 @@ export function ReunioesTable({
               <th className="pb-2 font-medium">Status</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-[#26262c]">
+          <tbody className="divide-y divide-[#e5e7eb]">
             {linhas.map((r, i) => (
-              <tr key={i} className="text-[#d4d4d8]">
-                <td className="max-w-xs truncate py-2 pr-4 font-medium text-[#f4f4f5]">
+              <tr key={i} className="text-[#374151]">
+                <td className="max-w-xs truncate py-2 pr-4 font-medium text-[#111827]">
                   {r.cliente}
                 </td>
                 <td className="py-2 pr-4">{r.vendedor}</td>
-                <td className="whitespace-nowrap py-2 pr-4 tabular-nums text-[#8a8a93]">
+                <td className="whitespace-nowrap py-2 pr-4 tabular-nums text-[#6b7280]">
                   {dateTimeShort(r.marcada_em)}
                 </td>
-                <td className="whitespace-nowrap py-2 pr-4 tabular-nums text-[#8a8a93]">
+                <td className="whitespace-nowrap py-2 pr-4 tabular-nums text-[#6b7280]">
                   {dateTimeShort(r.realizada_em)}
                 </td>
                 <td className="py-2">
@@ -105,7 +105,7 @@ export function ReunioesTable({
             ))}
             {linhas.length === 0 && (
               <tr>
-                <td colSpan={5} className="py-8 text-center text-[#8a8a93]">
+                <td colSpan={5} className="py-8 text-center text-[#6b7280]">
                   Nenhuma reunião neste filtro.
                 </td>
               </tr>

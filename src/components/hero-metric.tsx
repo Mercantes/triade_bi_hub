@@ -51,6 +51,9 @@ export function HeroMetric({
   mostrarMeta?: boolean;
 }) {
   const fmt = (v: number) => (format === "currency" ? brl(v) : num(v));
+  // ID do gradiente sem espaços/acentos (um id inválido faz o Recharts ignorar
+  // o fill e cair num preenchimento escuro padrão).
+  const gradId = `grad-${metaNoun.replace(/[^a-zA-Z0-9]/g, "")}`;
   const pace = computePace(meta, fromISO, value);
   const ritmo = pace.ritmoPct;
   const temMeta = mostrarMeta && meta > 0 && ritmo != null;
@@ -62,17 +65,17 @@ export function HeroMetric({
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[260px_1fr]">
         {/* Lado esquerdo */}
         <div className="flex flex-col justify-center">
-          <p className="text-4xl font-extrabold tracking-tight tabular-nums text-[#f4f4f5]">
+          <p className="text-4xl font-extrabold tracking-tight tabular-nums text-[#111827]">
             {fmt(value)}
           </p>
-          <p className="mt-1 flex items-center gap-1.5 text-sm text-[#a1a1aa]">
+          <p className="mt-1 flex items-center gap-1.5 text-sm text-[#4b5563]">
             {label}
-            <Icon name="info" className="h-3.5 w-3.5 text-[#52525b]" />
+            <Icon name="info" className="h-3.5 w-3.5 text-[#9ca3af]" />
           </p>
 
           {temMeta ? (
             <>
-              <p className="mt-3 text-xs text-[#71717a]">
+              <p className="mt-3 text-xs text-[#9ca3af]">
                 Meta de {metaNoun} para {mesNome(fromISO)}:{" "}
                 <span className="font-semibold text-[#2dd4bf]">{fmt(meta)}</span>
               </p>
@@ -85,9 +88,9 @@ export function HeroMetric({
                   <span className={`font-semibold ${ritmoColor(ritmo!)}`}>
                     {diffAbs}% {acima ? "acima" : "abaixo"} do ritmo
                   </span>{" "}
-                  <span className="text-[#71717a]">
+                  <span className="text-[#9ca3af]">
                     para bater a meta no mês — esperado até hoje:{" "}
-                    <span className="text-[#d4d4d8]">
+                    <span className="text-[#374151]">
                       {fmt(Math.round(pace.esperadoAteHoje))}
                     </span>
                   </span>
@@ -95,7 +98,7 @@ export function HeroMetric({
               </div>
             </>
           ) : mostrarMeta ? (
-            <p className="mt-3 text-xs text-[#71717a]">Sem meta definida</p>
+            <p className="mt-3 text-xs text-[#9ca3af]">Sem meta definida</p>
           ) : null}
         </div>
 
@@ -104,23 +107,23 @@ export function HeroMetric({
           <ResponsiveContainer width="100%" height="100%">
             <ComposedChart data={serie} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
               <defs>
-                <linearGradient id={`grad-${metaNoun}`} x1="0" y1="0" x2="0" y2="1">
+                <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor="#22c55e" stopOpacity={0.3} />
                   <stop offset="100%" stopColor="#22c55e" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1f1f24" vertical={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
               <XAxis
                 dataKey="dia"
                 tickFormatter={tickDia}
-                stroke="#52525b"
+                stroke="#9ca3af"
                 fontSize={11}
                 tickLine={false}
                 axisLine={false}
                 minTickGap={40}
               />
               <YAxis
-                stroke="#52525b"
+                stroke="#9ca3af"
                 fontSize={11}
                 tickLine={false}
                 axisLine={false}
@@ -129,17 +132,17 @@ export function HeroMetric({
               />
               <Tooltip
                 contentStyle={{
-                  background: "#16161a",
-                  border: "1px solid #26262c",
+                  background: "#ffffff",
+                  border: "1px solid #e5e7eb",
                   borderRadius: 8,
-                  color: "#f4f4f5",
+                  color: "#111827",
                   fontSize: 12,
                 }}
                 labelFormatter={(l) => displayDate(String(l))}
                 formatter={(v, n) => [fmt(Number(v)), n === "real" ? label : "Meta"]}
               />
               <Legend
-                wrapperStyle={{ fontSize: 11, color: "#a1a1aa" }}
+                wrapperStyle={{ fontSize: 11, color: "#4b5563" }}
                 iconType="plainline"
                 formatter={(val) => (val === "real" ? label : "Meta")}
               />
@@ -148,7 +151,7 @@ export function HeroMetric({
                   type="monotone"
                   dataKey="pace"
                   name="pace"
-                  stroke="#52525b"
+                  stroke="#9ca3af"
                   strokeWidth={1.5}
                   strokeDasharray="5 5"
                   dot={false}
@@ -160,7 +163,7 @@ export function HeroMetric({
                 name="real"
                 stroke="#22c55e"
                 strokeWidth={2}
-                fill={`url(#grad-${metaNoun})`}
+                fill={`url(#${gradId})`}
                 dot={{ r: 2, fill: "#22c55e", strokeWidth: 0 }}
                 activeDot={{ r: 4 }}
               />

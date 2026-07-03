@@ -1,16 +1,16 @@
 @import "tailwindcss";
 
 :root {
-  /* Paleta do painel (tema dark fixo) */
-  --bg: #0d0d0f;
-  --card: #16161a;
-  --border: #26262c;
+  /* Paleta do painel (tema light fixo) */
+  --bg: #f3f4f6;
+  --card: #ffffff;
+  --border: #e5e7eb;
   --accent: #e50914;
   --pos: #22c55e;
   --warn: #eab308;
   --meta: #2dd4bf; /* teal — metas e médias */
-  --text: #f4f4f5;
-  --muted: #8a8a93;
+  --text: #111827;
+  --muted: #6b7280;
 }
 
 @theme inline {
@@ -31,7 +31,7 @@ body {
   font-family: var(--font-geist-sans), system-ui, sans-serif;
 }
 
-/* Scrollbar discreta no tema dark */
+/* Scrollbar discreta no tema light */
 ::-webkit-scrollbar {
   width: 10px;
   height: 10px;
@@ -40,9 +40,9 @@ body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #2c2c33;
+  background: #e5e7eb;
   border-radius: 6px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #3a3a42;
+  background: #d1d5db;
 }

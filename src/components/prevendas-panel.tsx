@@ -14,6 +14,8 @@ function toRows(arr: { vendedor: string; qtd: number }[]): RankRow[] {
   return arr.map((v) => ({ vendedor: v.vendedor, value: v.qtd }));
 }
 
+type MetaField = "meta_leads" | "meta_reun_marcadas" | "meta_reun_realizadas";
+
 export function PreVendasPanel({
   funil,
   fromISO,
@@ -30,15 +32,35 @@ export function PreVendasPanel({
   const dias = computePace(0, fromISO, 0);
   const etapasFunil = mergeEtapasPreVenda(funil.pipeline_por_etapa.etapas, etapasVendas);
 
+  // Ideal por dia útil (meta do vendedor ÷ dias úteis do mês), por vendedor.
+  const metaByOwner = new Map(
+    funil.ranking_metas.vendedores.map((v) => [v.owner_id, v]),
+  );
+  const idealDia = (ownerId: number, field: MetaField): number => {
+    const meta = metaByOwner.get(ownerId)?.[field] ?? 0;
+    return dias.diasUteisTotais > 0 ? Math.round(meta / dias.diasUteisTotais) : 0;
+  };
+  const rowsIdeal = (
+    arr: { owner_id: number; vendedor: string; qtd: number }[],
+    field: MetaField,
+  ): RankRow[] =>
+    arr.map((v) => ({
+      vendedor: v.vendedor,
+      value: v.qtd,
+      ideal: idealDia(v.owner_id, field),
+    }));
+  // Coluna "ideal dia" só faz sentido em período de 1 mês (mesma regra do pace).
+  const idealLabel = mostrarMetas ? "ideal dia" : undefined;
+
   return (
     <div className="space-y-6">
       {/* Cabeçalho da seção */}
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold tracking-tight">SDRs</h2>
         {mostrarMetas && (
-          <span className="text-sm text-[#8a8a93]">
+          <span className="text-sm text-[#6b7280]">
             Dia útil{" "}
-            <span className="font-semibold text-[#f4f4f5]">
+            <span className="font-semibold text-[#111827]">
               {dias.diasUteisDecorridos}
             </span>{" "}
             de {dias.diasUteisTotais}
@@ -86,7 +108,8 @@ export function PreVendasPanel({
           total={num(m.leads_abertos)}
           sub={mostrarMetas ? <PaceSub value={m.leads_abertos} meta={metas.leads_abertos} fromISO={fromISO} /> : undefined}
           columnLabel="abertos"
-          rows={toRows(m.leads_abertos_por_vendedor)}
+          rows={rowsIdeal(m.leads_abertos_por_vendedor, "meta_leads")}
+          idealColumnLabel={idealLabel}
           formatValue={num}
           averageLabel="média leads abertos/vendedor"
         />
@@ -97,7 +120,8 @@ export function PreVendasPanel({
           total={num(m.reunioes_marcadas)}
           sub={mostrarMetas ? <PaceSub value={m.reunioes_marcadas} meta={metas.reunioes_marcadas} fromISO={fromISO} /> : undefined}
           columnLabel="marcadas"
-          rows={toRows(m.reunioes_marcadas_por_vendedor)}
+          rows={rowsIdeal(m.reunioes_marcadas_por_vendedor, "meta_reun_marcadas")}
+          idealColumnLabel={idealLabel}
           formatValue={num}
           averageLabel="média marcadas/vendedor"
         />
@@ -108,7 +132,8 @@ export function PreVendasPanel({
           total={num(m.reunioes_realizadas)}
           sub={mostrarMetas ? <PaceSub value={m.reunioes_realizadas} meta={metas.reunioes_realizadas} fromISO={fromISO} /> : undefined}
           columnLabel="realizadas"
-          rows={toRows(m.reunioes_realizadas_por_vendedor)}
+          rows={rowsIdeal(m.reunioes_realizadas_por_vendedor, "meta_reun_realizadas")}
+          idealColumnLabel={idealLabel}
           formatValue={num}
           averageLabel="média realizadas/vendedor"
         />

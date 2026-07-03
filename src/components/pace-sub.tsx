@@ -17,12 +17,12 @@ export function PaceSub({
   const fmt = (v: number) => (format === "currency" ? brl(v) : num(v));
 
   if (!(meta > 0)) {
-    return <span className="text-[#8a8a93]">Meta mês: —</span>;
+    return <span className="text-[#6b7280]">Meta mês: —</span>;
   }
 
   const { ritmoPct } = computePace(meta, fromISO, value);
   if (ritmoPct == null) {
-    return <span className="text-[#8a8a93]">Meta mês: {fmt(meta)}</span>;
+    return <span className="text-[#6b7280]">Meta mês: {fmt(meta)}</span>;
   }
 
   const acima = ritmoPct >= 100;
@@ -33,7 +33,7 @@ export function PaceSub({
       <span className={`font-medium ${ritmoColor(ritmoPct)}`}>
         {acima ? "▲" : "▼"} {diff}% do previsto
       </span>
-      <span className="text-[#8a8a93]"> · Meta mês: {fmt(meta)}</span>
+      <span className="text-[#6b7280]"> · Meta mês: {fmt(meta)}</span>
     </span>
   );
 }

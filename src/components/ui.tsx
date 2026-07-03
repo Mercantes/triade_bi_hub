@@ -9,7 +9,7 @@ export function Card({
 }) {
   return (
     <div
-      className={`rounded-xl border border-[#26262c] bg-[#16161a] ${className}`}
+      className={`rounded-xl border border-[#e5e7eb] bg-[#ffffff] ${className}`}
     >
       {children}
     </div>
@@ -18,7 +18,7 @@ export function Card({
 
 export function SectionTitle({ children }: { children: ReactNode }) {
   return (
-    <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-[#8a8a93]">
+    <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-[#6b7280]">
       {children}
     </h2>
   );
@@ -28,7 +28,7 @@ export function SectionTitle({ children }: { children: ReactNode }) {
 export function StatCard({
   label,
   value,
-  valueClassName = "text-[#f4f4f5]",
+  valueClassName = "text-[#111827]",
   hint,
 }: {
   label: string;
@@ -38,7 +38,7 @@ export function StatCard({
 }) {
   return (
     <Card className="flex min-h-[116px] flex-col p-5">
-      <p className="text-[11px] font-medium uppercase tracking-wider text-[#8a8a93]">
+      <p className="text-[11px] font-medium uppercase tracking-wider text-[#6b7280]">
         {label}
       </p>
       <p
@@ -46,7 +46,7 @@ export function StatCard({
       >
         {value}
       </p>
-      {hint && <p className="mt-auto pt-1 text-xs text-[#8a8a93]">{hint}</p>}
+      {hint && <p className="mt-auto pt-1 text-xs text-[#6b7280]">{hint}</p>}
     </Card>
   );
 }
@@ -60,7 +60,7 @@ export function ProgressBar({
   barClass: string;
 }) {
   return (
-    <div className="h-2 w-full overflow-hidden rounded-full bg-[#26262c]">
+    <div className="h-2 w-full overflow-hidden rounded-full bg-[#e5e7eb]">
       <div
         className={`h-full rounded-full ${barClass}`}
         style={{ width: `${Math.min(Math.max(pct, 0), 100)}%` }}

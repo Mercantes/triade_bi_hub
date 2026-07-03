@@ -28,11 +28,11 @@ export function ConversaoOrigemCard({
     <Card className="p-5">
       <SectionTitle>Conversão por origem</SectionTitle>
       {rows.length === 0 ? (
-        <p className="py-8 text-center text-sm text-[#71717a]">Sem dados.</p>
+        <p className="py-8 text-center text-sm text-[#9ca3af]">Sem dados.</p>
       ) : (
         <>
           {/* Cabeçalho das colunas */}
-          <div className="flex items-center gap-3 pb-2 text-[10px] font-medium uppercase tracking-wider text-[#71717a]">
+          <div className="flex items-center gap-3 pb-2 text-[10px] font-medium uppercase tracking-wider text-[#9ca3af]">
             <span className="w-32 shrink-0 text-right">Origem</span>
             <span className="flex-1">Leads gerados</span>
             <span className="w-16 shrink-0 text-right">Vendas</span>
@@ -43,7 +43,7 @@ export function ConversaoOrigemCard({
             {rows.map((o) => (
               <div key={o.origem} className="flex items-center gap-3 text-sm">
                 <span
-                  className="w-32 shrink-0 truncate text-right text-xs text-[#d4d4d8]"
+                  className="w-32 shrink-0 truncate text-right text-xs text-[#374151]"
                   title={o.origem}
                 >
                   {shorten(o.origem)}
@@ -53,12 +53,12 @@ export function ConversaoOrigemCard({
                     className="flex h-full items-center justify-end rounded bg-[#2dd4bf]/70 px-2"
                     style={{ width: `${Math.max((o.total / max) * 100, 6)}%` }}
                   >
-                    <span className="text-[11px] font-semibold tabular-nums text-[#0d0d0f]">
+                    <span className="text-[11px] font-semibold tabular-nums text-[#0f172a]">
                       {num(o.total)}
                     </span>
                   </div>
                 </div>
-                <span className="w-16 shrink-0 text-right text-xs font-semibold tabular-nums text-[#f4f4f5]">
+                <span className="w-16 shrink-0 text-right text-xs font-semibold tabular-nums text-[#111827]">
                   {num(o.ganhos)}
                 </span>
                 <span
@@ -71,10 +71,10 @@ export function ConversaoOrigemCard({
           </div>
         </>
       )}
-      <p className="mt-3 text-[11px] text-[#71717a]">
-        <span className="text-[#a1a1aa]">Leads gerados</span> = oportunidades criadas no
-        período por canal · <span className="text-[#a1a1aa]">Vendas</span> = quantas
-        fecharam · <span className="text-[#a1a1aa]">Conv.</span> = vendas ÷ leads
+      <p className="mt-3 text-[11px] text-[#9ca3af]">
+        <span className="text-[#4b5563]">Leads gerados</span> = oportunidades criadas no
+        período por canal · <span className="text-[#4b5563]">Vendas</span> = quantas
+        fecharam · <span className="text-[#4b5563]">Conv.</span> = vendas ÷ leads
       </p>
     </Card>
   );

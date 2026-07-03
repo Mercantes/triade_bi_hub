@@ -20,13 +20,13 @@ export function MotivosBars({
     <Card className="p-5">
       <SectionTitle>Motivos de perda</SectionTitle>
       {sorted.length === 0 ? (
-        <p className="py-8 text-center text-sm text-[#71717a]">Sem dados.</p>
+        <p className="py-8 text-center text-sm text-[#9ca3af]">Sem dados.</p>
       ) : (
         <div className="space-y-2.5">
           {sorted.map((m) => (
             <div key={m.motivo} className="flex items-center gap-3 text-sm">
               <span
-                className="w-44 shrink-0 truncate text-right text-xs text-[#a1a1aa]"
+                className="w-44 shrink-0 truncate text-right text-xs text-[#4b5563]"
                 title={m.motivo}
               >
                 {shorten(m.motivo)}

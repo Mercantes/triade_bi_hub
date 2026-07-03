@@ -19,15 +19,15 @@ export function FunnelBars({
         {ordered.map((e) => (
           <div key={e.stage_id}>
             <div className="mb-1 flex items-baseline justify-between gap-2 text-sm">
-              <span className="truncate text-[#d4d4d8]">{e.stage_name}</span>
-              <span className="shrink-0 tabular-nums text-[#8a8a93]">
-                <span className="font-semibold text-[#f4f4f5]">{num(e.qtd)}</span>
+              <span className="truncate text-[#374151]">{e.stage_name}</span>
+              <span className="shrink-0 tabular-nums text-[#6b7280]">
+                <span className="font-semibold text-[#111827]">{num(e.qtd)}</span>
                 {showValue && e.valor > 0 && (
                   <span className="ml-2 text-xs">{brl(e.valor)}</span>
                 )}
               </span>
             </div>
-            <div className="h-2.5 w-full overflow-hidden rounded-full bg-[#26262c]">
+            <div className="h-2.5 w-full overflow-hidden rounded-full bg-[#e5e7eb]">
               <div
                 className="h-full rounded-full bg-[#e50914]"
                 style={{ width: `${(e.qtd / maxQtd) * 100}%` }}

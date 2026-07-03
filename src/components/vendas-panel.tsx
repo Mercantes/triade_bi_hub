@@ -103,7 +103,7 @@ export function VendasPanel({
               <p className="mt-1.5 text-2xl font-bold tabular-nums text-[#22c55e]">
                 {num(gp.ganhos.qtd)}
               </p>
-              <p className="mt-1 text-sm tabular-nums text-[#d4d4d8]">
+              <p className="mt-1 text-sm tabular-nums text-[#374151]">
                 {brl(gp.ganhos.valor)}
               </p>
             </Card>
@@ -114,7 +114,7 @@ export function VendasPanel({
               <p className="mt-1.5 text-2xl font-bold tabular-nums text-[#e50914]">
                 {num(gp.perdas.qtd)}
               </p>
-              <p className="mt-1 text-sm tabular-nums text-[#d4d4d8]">
+              <p className="mt-1 text-sm tabular-nums text-[#374151]">
                 {brl(gp.perdas.valor)}
               </p>
             </Card>
@@ -132,28 +132,28 @@ export function VendasPanel({
           <SectionTitle>Ranking de vendedores (meta R$)</SectionTitle>
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-xs uppercase tracking-wider text-[#8a8a93]">
+              <tr className="text-left text-xs uppercase tracking-wider text-[#6b7280]">
                 <th className="pb-2 font-medium">Vendedor</th>
                 <th className="pb-2 text-right font-medium">Qtd</th>
                 <th className="pb-2 text-right font-medium">Faturamento</th>
                 <th className="w-40 pb-2 pl-4 font-medium">Atingimento</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#26262c]">
+            <tbody className="divide-y divide-[#e5e7eb]">
               {[...funil.ranking_metas.vendedores]
                 .sort((a, b) => b.valor - a.valor)
                 .map((v) => {
                   const at = v.atingimento_faturamento_pct;
                   return (
-                    <tr key={v.owner_id} className="text-[#d4d4d8]">
+                    <tr key={v.owner_id} className="text-[#374151]">
                       <td className="py-2">{v.vendedor}</td>
                       <td className="py-2 text-right tabular-nums">{num(v.qtd)}</td>
-                      <td className="py-2 text-right font-semibold tabular-nums text-[#f4f4f5]">
+                      <td className="py-2 text-right font-semibold tabular-nums text-[#111827]">
                         {brl(v.valor)}
                       </td>
                       <td className="py-2 pl-4">
                         {at == null ? (
-                          <span className="text-xs text-[#8a8a93]">sem meta</span>
+                          <span className="text-xs text-[#6b7280]">sem meta</span>
                         ) : (
                           <div className="flex items-center gap-2">
                             <ProgressBar pct={at} barClass={attainmentBar(at)} />
@@ -170,7 +170,7 @@ export function VendasPanel({
                 })}
               {funil.ranking_metas.vendedores.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="py-6 text-center text-[#8a8a93]">
+                  <td colSpan={4} className="py-6 text-center text-[#6b7280]">
                     Sem dados.
                   </td>
                 </tr>
@@ -183,25 +183,25 @@ export function VendasPanel({
           <SectionTitle>Reuniões realizadas por vendedor</SectionTitle>
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-xs uppercase tracking-wider text-[#8a8a93]">
+              <tr className="text-left text-xs uppercase tracking-wider text-[#6b7280]">
                 <th className="pb-2 font-medium">Vendedor</th>
                 <th className="pb-2 text-right font-medium">Qtd</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#26262c]">
+            <tbody className="divide-y divide-[#e5e7eb]">
               {[...rr.reunioes_realizadas_por_vendedor]
                 .sort((a, b) => b.qtd - a.qtd)
                 .map((r) => (
-                  <tr key={r.owner_id} className="text-[#d4d4d8]">
+                  <tr key={r.owner_id} className="text-[#374151]">
                     <td className="py-2">{r.vendedor}</td>
-                    <td className="py-2 text-right font-semibold tabular-nums text-[#f4f4f5]">
+                    <td className="py-2 text-right font-semibold tabular-nums text-[#111827]">
                       {num(r.qtd)}
                     </td>
                   </tr>
                 ))}
               {rr.reunioes_realizadas_por_vendedor.length === 0 && (
                 <tr>
-                  <td colSpan={2} className="py-6 text-center text-[#8a8a93]">
+                  <td colSpan={2} className="py-6 text-center text-[#6b7280]">
                     Sem dados.
                   </td>
                 </tr>

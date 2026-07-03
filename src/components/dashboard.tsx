@@ -150,7 +150,7 @@ export function Dashboard() {
   return (
     <div className="min-h-screen">
       {/* Header */}
-      <header className="sticky top-0 z-10 border-b border-[#26262c] bg-[#0d0d0f]/95 backdrop-blur">
+      <header className="sticky top-0 z-10 border-b border-[#e5e7eb] bg-[#f3f4f6]/95 backdrop-blur">
         <div className="mx-auto flex max-w-[1320px] flex-wrap items-center justify-between gap-4 px-6 py-3 lg:px-10">
           {/* Título */}
           <div className="flex items-center gap-2">
@@ -161,7 +161,7 @@ export function Dashboard() {
           </div>
 
           {/* Toggle de funil */}
-          <div className="flex rounded-lg border border-[#26262c] bg-[#16161a] p-1">
+          <div className="flex rounded-lg border border-[#e5e7eb] bg-[#ffffff] p-1">
             {TABS.map((t) => (
               <button
                 key={t.nome}
@@ -169,7 +169,7 @@ export function Dashboard() {
                 className={`rounded-md px-4 py-1.5 text-sm font-medium transition-colors ${
                   tab === t.nome
                     ? "bg-[#e50914] text-white"
-                    : "text-[#8a8a93] hover:text-[#f4f4f5]"
+                    : "text-[#6b7280] hover:text-[#111827]"
                 }`}
               >
                 {t.label}
@@ -179,12 +179,12 @@ export function Dashboard() {
 
           {/* Período */}
           <div className="flex flex-wrap items-center gap-2">
-            <div className="flex overflow-hidden rounded-lg border border-[#26262c]">
+            <div className="flex overflow-hidden rounded-lg border border-[#e5e7eb]">
               {SHORTCUTS.map((s) => (
                 <button
                   key={s.label}
                   onClick={() => applyRange(s.range())}
-                  className="border-r border-[#26262c] bg-[#16161a] px-3 py-1.5 text-xs font-medium text-[#8a8a93] transition-colors last:border-r-0 hover:bg-[#1f1f24] hover:text-[#f4f4f5]"
+                  className="border-r border-[#e5e7eb] bg-[#ffffff] px-3 py-1.5 text-xs font-medium text-[#6b7280] transition-colors last:border-r-0 hover:bg-[#e5e7eb] hover:text-[#111827]"
                 >
                   {s.label}
                 </button>
@@ -195,15 +195,15 @@ export function Dashboard() {
               value={range.from}
               max={range.to}
               onChange={(e) => applyRange({ ...range, from: e.target.value })}
-              className="rounded-lg border border-[#26262c] bg-[#16161a] px-2.5 py-1.5 text-xs text-[#f4f4f5] outline-none focus:border-[#e50914] [color-scheme:dark]"
+              className="rounded-lg border border-[#e5e7eb] bg-[#ffffff] px-2.5 py-1.5 text-xs text-[#111827] outline-none focus:border-[#e50914] [color-scheme:light]"
             />
-            <span className="text-xs text-[#8a8a93]">até</span>
+            <span className="text-xs text-[#6b7280]">até</span>
             <input
               type="date"
               value={range.to}
               min={range.from}
               onChange={(e) => applyRange({ ...range, to: e.target.value })}
-              className="rounded-lg border border-[#26262c] bg-[#16161a] px-2.5 py-1.5 text-xs text-[#f4f4f5] outline-none focus:border-[#e50914] [color-scheme:dark]"
+              className="rounded-lg border border-[#e5e7eb] bg-[#ffffff] px-2.5 py-1.5 text-xs text-[#111827] outline-none focus:border-[#e50914] [color-scheme:light]"
             />
             <button
               onClick={abrirEdicao}
@@ -216,7 +216,7 @@ export function Dashboard() {
         </div>
 
         {/* Linha de atualização */}
-        <div className="mx-auto max-w-[1320px] px-6 pb-2 text-xs text-[#8a8a93] lg:px-10">
+        <div className="mx-auto max-w-[1320px] px-6 pb-2 text-xs text-[#6b7280] lg:px-10">
           <span>
             Período: {displayDate(range.from)} – {displayDate(range.to)}
             {" · "}
@@ -232,7 +232,7 @@ export function Dashboard() {
             <p className="font-semibold text-[#e50914]">
               Não foi possível carregar os dados
             </p>
-            <p className="mt-1 text-sm text-[#d4d4d8]">{error}</p>
+            <p className="mt-1 text-sm text-[#374151]">{error}</p>
             <button
               onClick={retry}
               className="mt-4 rounded-lg bg-[#e50914] px-4 py-2 text-sm font-medium text-white hover:bg-[#c40810]"
@@ -243,8 +243,8 @@ export function Dashboard() {
         )}
 
         {!error && loading && !data && (
-          <div className="flex flex-col items-center justify-center py-32 text-[#8a8a93]">
-            <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#26262c] border-t-[#e50914]" />
+          <div className="flex flex-col items-center justify-center py-32 text-[#6b7280]">
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#e5e7eb] border-t-[#e50914]" />
             <p className="mt-4 text-sm">Carregando dados…</p>
           </div>
         )}
@@ -253,8 +253,8 @@ export function Dashboard() {
           <div className="relative">
             {loading && (
               <div className="pointer-events-none absolute inset-0 z-10 flex items-start justify-center pt-24">
-                <div className="flex items-center gap-2 rounded-full border border-[#26262c] bg-[#16161a] px-4 py-2 text-sm font-medium text-[#d4d4d8] shadow-lg">
-                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-[#26262c] border-t-[#e50914]" />
+                <div className="flex items-center gap-2 rounded-full border border-[#e5e7eb] bg-[#ffffff] px-4 py-2 text-sm font-medium text-[#374151] shadow-lg">
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-[#e5e7eb] border-t-[#e50914]" />
                   Atualizando…
                 </div>
               </div>
@@ -280,7 +280,7 @@ export function Dashboard() {
         )}
 
         {!error && !loading && data && !funil && (
-          <p className="py-32 text-center text-[#8a8a93]">
+          <p className="py-32 text-center text-[#6b7280]">
             Funil &quot;{tab}&quot; não encontrado na resposta.
           </p>
         )}
