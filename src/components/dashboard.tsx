@@ -20,6 +20,7 @@ import { dateTimeBR } from "@/lib/format";
 import { PreVendasPanel } from "./prevendas-panel";
 import { VendasPanel } from "./vendas-panel";
 import { EditMetasModal } from "./edit-metas-modal";
+import { LogoTriade } from "./logo-triade";
 
 const TABS: { label: string; nome: FunilNome }[] = [
   { label: "Pré-Vendas", nome: "Pre-Vendas" },
@@ -160,9 +161,7 @@ export function Dashboard() {
         <div className="mx-auto flex max-w-[1320px] flex-wrap items-center justify-between gap-4 px-6 py-3 lg:px-10">
           {/* Título */}
           <div className="flex items-center gap-2">
-            <span className="flex h-7 w-7 items-center justify-center rounded-md bg-[#e50914] text-sm font-black text-white">
-              T
-            </span>
+            <LogoTriade className="h-8 w-8" />
             <h1 className="text-lg font-bold tracking-tight">BI Tríade</h1>
           </div>
 
