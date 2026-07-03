@@ -31,9 +31,19 @@ export function PreVendasPanel({
   metasVendedores: VendedorMeta[];
 }) {
   const m = funil.metricas;
-  const metas = m.metas;
   const dias = computePace(0, fromISO, 0);
   const etapasFunil = mergeEtapasPreVenda(funil.pipeline_por_etapa.etapas, etapasVendas);
+
+  // Meta do time = soma das metas por vendedor (fonte única: funil de Vendas).
+  // Evita a contagem em dobro do agregado, que somava os dois pipelines.
+  const somaMeta = (field: MetaField) =>
+    metasVendedores.reduce((s, v) => s + (v[field] || 0), 0);
+  const metas = {
+    ...m.metas,
+    leads_abertos: somaMeta("meta_leads"),
+    reunioes_marcadas: somaMeta("meta_reun_marcadas"),
+    reunioes_realizadas: somaMeta("meta_reun_realizadas"),
+  };
 
   // Ideal por dia útil (meta do vendedor ÷ dias úteis do mês), por vendedor.
   // Metas vêm do funil de Vendas (menu único de "Editar metas").

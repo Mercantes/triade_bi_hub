@@ -32,6 +32,12 @@ export function VendasPanel({
   const metas = m.metas;
   // "Reuniões realizadas" considera todas (Pré-Vendas + Vendas), igual à aba Pré-Vendas.
   const rr = reunioesAgg ?? m;
+  // Meta de reuniões realizadas = soma das metas por vendedor (fonte única: funil
+  // de Vendas). O agregado da Pré-Vendas somava dois pipelines e dobrava a meta.
+  const metaReunReal = funil.ranking_metas.vendedores.reduce(
+    (s, v) => s + (v.meta_reun_realizadas || 0),
+    0,
+  );
   // Taxa de Fechamento = Vendas / Reuniões Realizadas.
   const taxaFechamento = rr.reunioes_realizadas
     ? (gp.ganhos.qtd / rr.reunioes_realizadas) * 100
@@ -44,11 +50,11 @@ export function VendasPanel({
         label="Reuniões realizadas"
         metaNoun="reuniões realizadas"
         value={rr.reunioes_realizadas}
-        meta={rr.metas.reunioes_realizadas}
+        meta={metaReunReal}
         serie={buildChartSeries(
           rr.serie_diaria,
           "reunioes_realizadas",
-          rr.metas.reunioes_realizadas,
+          metaReunReal,
           fromISO,
         )}
         fromISO={fromISO}
