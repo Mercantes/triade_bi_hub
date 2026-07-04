@@ -234,7 +234,11 @@ export function PreVendasPanel({
       </section>
 
       {/* Reuniões do mês */}
-      <ReunioesTable reunioes={m.reunioes_detalhe} vendedorLabel="Vendedor" />
+      <ReunioesTable
+        reunioes={m.reunioes_detalhe}
+        vendedorLabel="Vendedor"
+        clienteLabel="Lead"
+      />
     </div>
   );
 }

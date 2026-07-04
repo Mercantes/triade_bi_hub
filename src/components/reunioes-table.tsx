@@ -19,9 +19,11 @@ function statusBadge(status: string): string {
 export function ReunioesTable({
   reunioes,
   vendedorLabel = "Vendedor",
+  clienteLabel = "Cliente",
 }: {
   reunioes: ReuniaoDetalhe[];
   vendedorLabel?: string;
+  clienteLabel?: string;
 }) {
   // Tabs geradas a partir dos status presentes nos dados.
   const tabs = useMemo(() => {
@@ -72,7 +74,7 @@ export function ReunioesTable({
         <table className="w-full text-sm">
           <thead>
             <tr className="text-left text-[10px] uppercase tracking-wider text-[#6b7280]">
-              <th className="pb-2 font-medium">Cliente</th>
+              <th className="pb-2 font-medium">{clienteLabel}</th>
               <th className="pb-2 font-medium">{vendedorLabel}</th>
               <th className="pb-2 font-medium">Marcada em</th>
               <th className="pb-2 font-medium">Realizada em</th>
