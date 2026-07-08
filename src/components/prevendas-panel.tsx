@@ -45,12 +45,15 @@ export function PreVendasPanel({
     reunioes_realizadas: somaMeta("meta_reun_realizadas"),
   };
 
-  // Ideal por dia útil (meta do vendedor ÷ dias úteis do mês), por vendedor.
-  // Metas vêm do funil de Vendas (menu único de "Editar metas").
+  // Ideal acumulado até hoje = meta do vendedor ÷ dias úteis totais × dias úteis
+  // decorridos (quanto deveria ter no dia útil de hoje). Compara com o realizado
+  // acumulado. Metas vêm do funil de Vendas (menu único de "Editar metas").
   const metaByOwner = new Map(metasVendedores.map((v) => [v.owner_id, v]));
   const idealDia = (ownerId: number, field: MetaField): number => {
     const meta = metaByOwner.get(ownerId)?.[field] ?? 0;
-    return dias.diasUteisTotais > 0 ? Math.round(meta / dias.diasUteisTotais) : 0;
+    return dias.diasUteisTotais > 0
+      ? Math.round((meta / dias.diasUteisTotais) * dias.diasUteisDecorridos)
+      : 0;
   };
   const rowsIdeal = (
     arr: { owner_id: number; vendedor: string; qtd: number }[],
@@ -61,8 +64,8 @@ export function PreVendasPanel({
       value: v.qtd,
       ideal: idealDia(v.owner_id, field),
     }));
-  // Coluna "ideal dia" só faz sentido em período de 1 mês (mesma regra do pace).
-  const idealLabel = mostrarMetas ? "ideal dia" : undefined;
+  // Coluna "ideal hoje" (acumulado esperado) só faz sentido em período de 1 mês.
+  const idealLabel = mostrarMetas ? "ideal hoje" : undefined;
 
   return (
     <div className="space-y-6">

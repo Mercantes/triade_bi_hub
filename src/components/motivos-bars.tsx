@@ -13,7 +13,22 @@ export function MotivosBars({
   motivos: MotivoPerda[];
   limit?: number;
 }) {
-  const sorted = [...motivos].sort((a, b) => b.qtd - a.qtd).slice(0, limit);
+  // Ordena e, se houver mais motivos que o limite, agrupa o excedente em
+  // "Outros (N)" — assim a soma das barras sempre bate com o total de perdas.
+  const ordenados = [...motivos].sort((a, b) => b.qtd - a.qtd);
+  const sorted =
+    ordenados.length > limit
+      ? [
+          ...ordenados.slice(0, limit - 1),
+          {
+            motivo: `Outros (${ordenados.length - (limit - 1)})`,
+            qtd: ordenados
+              .slice(limit - 1)
+              .reduce((s, m) => s + m.qtd, 0),
+            valor: 0,
+          },
+        ]
+      : ordenados;
   const max = Math.max(1, ...sorted.map((m) => m.qtd));
 
   return (
