@@ -18,6 +18,12 @@ import { BI_ENDPOINT } from "@/lib/config";
  */
 const REVALIDATE = 300; // 5 min
 
+// O Apps Script do Google dá 404/5xx transitórios (cold start / instabilidade).
+// Tentamos algumas vezes antes de mostrar erro ao usuário.
+const ATTEMPTS = 3;
+const RETRYABLE = new Set([404, 425, 429, 500, 502, 503, 504]);
+const ATTEMPT_TIMEOUT_MS = 25_000;
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const from = searchParams.get("from");
@@ -28,38 +34,55 @@ export async function GET(request: Request) {
   if (from) url.searchParams.set("from", from);
   if (to) url.searchParams.set("to", to);
 
-  try {
-    const res = await fetch(url.toString(), {
-      redirect: "follow",
-      cache: "no-store",
-    });
+  let lastError = "Falha ao consultar o endpoint";
 
-    if (!res.ok) {
-      return NextResponse.json(
-        { ok: false, error: `Endpoint respondeu ${res.status}` },
-        { status: 502, headers: { "Cache-Control": "no-store" } },
-      );
+  for (let attempt = 1; attempt <= ATTEMPTS; attempt++) {
+    try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), ATTEMPT_TIMEOUT_MS);
+      let res: Response;
+      try {
+        res = await fetch(url.toString(), {
+          redirect: "follow",
+          cache: "no-store",
+          signal: controller.signal,
+        });
+      } finally {
+        clearTimeout(timer);
+      }
+
+      if (res.ok) {
+        // O Apps Script às vezes responde com content-type text/plain.
+        const text = await res.text();
+        const data = JSON.parse(text);
+
+        // Não cacheia respostas de erro do próprio Apps Script (ok:false).
+        const cacheHeader =
+          nocache || !data?.ok
+            ? "no-store"
+            : `public, s-maxage=${REVALIDATE}, stale-while-revalidate=3600`;
+
+        return NextResponse.json(data, {
+          headers: { "Cache-Control": cacheHeader },
+        });
+      }
+
+      lastError = `Endpoint respondeu ${res.status}`;
+      if (!RETRYABLE.has(res.status)) break; // erro não-transitório: não insiste
+    } catch (error) {
+      // Timeout/abort ou corpo inválido (parcial no cold start): vale retry.
+      lastError =
+        error instanceof Error ? error.message : "Falha ao consultar o endpoint";
     }
 
-    // O Apps Script às vezes responde com content-type text/plain.
-    const text = await res.text();
-    const data = JSON.parse(text);
-
-    // Não cacheia respostas de erro do próprio Apps Script (ok:false).
-    const cacheHeader =
-      nocache || !data?.ok
-        ? "no-store"
-        : `public, s-maxage=${REVALIDATE}, stale-while-revalidate=3600`;
-
-    return NextResponse.json(data, { headers: { "Cache-Control": cacheHeader } });
-  } catch (error) {
-    return NextResponse.json(
-      {
-        ok: false,
-        error:
-          error instanceof Error ? error.message : "Falha ao consultar o endpoint",
-      },
-      { status: 502, headers: { "Cache-Control": "no-store" } },
-    );
+    // Backoff progressivo antes da próxima tentativa (0,6s, 1,2s).
+    if (attempt < ATTEMPTS) {
+      await new Promise((r) => setTimeout(r, 600 * attempt));
+    }
   }
+
+  return NextResponse.json(
+    { ok: false, error: lastError },
+    { status: 502, headers: { "Cache-Control": "no-store" } },
+  );
 }
